@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#6D28D9"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="IAM Brand"><title>IAM Brand — نظام المحاسبة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}html,body{height:100%;font-family:'Cairo',sans-serif}
+body{background:#F5F3FF;color:#1E293B;direction:rtl}input,select,button,textarea{font-family:'Cairo',sans-serif}button{cursor:pointer}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:#C4B5FD;border-radius:4px}
+.splash{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:14px;background:linear-gradient(135deg,#4C1D95,#6D28D9)}
+.splash-logo{font-size:52px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.setup-bg{min-height:100vh;background:linear-gradient(150deg,#4C1D95,#7C3AED);display:flex;align-items:center;justify-content:center;padding:20px}
+.login-bg{min-height:100vh;background:linear-gradient(135deg,#6D28D9,#4C1D95);display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-card{background:white;border-radius:20px;padding:28px 24px;width:100%;max-width:420px;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.upick{padding:12px 8px;border-radius:12px;border:2px solid #E2E8F0;background:white;cursor:pointer;transition:all .2s;width:100%;text-align:center}
+.upick.a{border-color:#6D28D9!important;background:#F5F3FF!important}.upick.m{border-color:#047857!important;background:#ECFDF5!important}.upick.q{border-color:#DC2626!important;background:#FEF2F2!important}
+.app-header{background:linear-gradient(135deg,#6D28D9,#5B21B6);color:white;padding:10px 16px;position:sticky;top:0;z-index:200;box-shadow:0 4px 20px rgba(109,40,217,.4)}
+.hinner{max-width:1200px;margin:0 auto}.hrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.dtabs{display:flex;gap:4px;flex-wrap:wrap}.dtab{padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-family:'Cairo',sans-serif;font-weight:600;background:rgba(255,255,255,.15);color:white;transition:all .2s;white-space:nowrap}.dtab.act{background:white;color:#6D28D9;font-weight:800}
+.content{padding:16px;max-width:1200px;margin:0 auto;padding-bottom:90px}
+.bnav{display:none;position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #E2E8F0;z-index:200;padding-bottom:env(safe-area-inset-bottom,0px)}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px 6px;border:none;background:none;color:#94A3B8;gap:2px;font-size:10px;font-family:'Cairo',sans-serif}.bni.act{color:#6D28D9}.bni .ico{font-size:20px}
+.mmenu{position:fixed;bottom:68px;right:0;left:0;background:white;border-top:1px solid #E2E8F0;z-index:300;display:none;flex-wrap:wrap;box-shadow:0 -4px 20px rgba(0,0,0,.1)}.mmenu.open{display:flex}
+.mmi{flex:1 1 25%;display:flex;flex-direction:column;align-items:center;padding:12px 4px;border:none;background:none;color:#64748B;font-family:'Cairo',sans-serif;font-size:11px;gap:3px;border-top:1px solid #F1F5F9}.mmi.act{color:#6D28D9}.mmi span{font-size:20px}
+.mov{position:fixed;inset:0;z-index:250;display:none}.mov.open{display:block}
+.sync-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-left:5px;flex-shrink:0}
+.sync-dot.ok{background:#4ADE80}.sync-dot.busy{background:#FCD34D;animation:pulse .8s infinite}.sync-dot.err{background:#FCA5A5}
+@media(max-width:640px){.bnav{display:flex}.dtabs{display:none}.content{padding:12px;padding-bottom:90px}}
+.card{background:white;border-radius:14px;padding:16px 18px;box-shadow:0 1px 6px rgba(0,0,0,.06);border:1px solid #EDE9FE;margin-bottom:14px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.fg{display:flex;flex-direction:column;gap:4px}.fg label{font-size:13px;font-weight:600;color:#475569}
+.fc{padding:9px 12px;border-radius:10px;border:1.5px solid #E2E8F0;font-family:'Cairo',sans-serif;font-size:14px;color:#1E293B;outline:none;direction:rtl;background:white;width:100%;transition:border-color .2s}.fc:focus{border-color:#A78BFA}
+.btn{padding:8px 16px;border-radius:10px;border:none;font-family:'Cairo',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .15s}
+.bp{background:#6D28D9;color:white}.bs{background:#047857;color:white}.bd{background:#FEF2F2;color:#DC2626}.bg2{background:#F8FAFC;color:#64748B}.bxl{background:#217346;color:white}.bw{background:#92400E;color:white}
+.blg{padding:12px 20px;font-size:15px;width:100%;border-radius:12px}
+.badge{padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;display:inline-block}
+.kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:10px;margin-bottom:14px}
+.kcard{background:white;border-radius:12px;padding:12px 13px;border:1px solid #EDE9FE;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.pcgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px}.pc{border-radius:12px;padding:14px 16px}
+.twrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}
+th{padding:9px 10px;text-align:right;font-weight:700;color:#475569;border-bottom:2px solid #EDE9FE;background:#F5F3FF;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid #F1F5F9}tr:nth-child(even) td{background:#FAFAFA}
+.notif{position:fixed;bottom:80px;right:16px;background:#1E293B;color:white;padding:10px 16px;border-radius:10px;font-size:13px;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none}.notif.show{opacity:1}
+.fab-xl{position:fixed;bottom:76px;left:16px;z-index:100;background:#217346;color:white;border:none;border-radius:50px;padding:9px 16px;font-family:'Cairo',sans-serif;font-weight:800;font-size:13px;box-shadow:0 4px 14px rgba(33,115,70,.4);cursor:pointer}
+@media(min-width:641px){.fab-xl{bottom:20px;left:20px}}
+.calc-result{background:linear-gradient(135deg,#F5F3FF,#EDE9FE);border:2px solid #A78BFA;border-radius:14px;padding:16px;margin-top:14px}
+.tag-green{background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;border-radius:8px;padding:5px 12px;font-size:13px;font-weight:700}
+.tag-red{background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;border-radius:8px;padding:5px 12px;font-size:13px;font-weight:700}
+.tag-purple{background:#F5F3FF;color:#6D28D9;border:1px solid #C4B5FD;border-radius:8px;padding:5px 12px;font-size:13px;font-weight:700}
+</style></head>
+<body>
+<div id="app"><div class="splash"><div class="splash-logo">✨</div><div style="color:white;font-size:22px;font-weight:900">IAM Brand</div><div style="color:rgba(255,255,255,.7);font-size:13px;margin-top:4px">نظام المحاسبة الذكي</div></div></div>
+<div id="notif" class="notif"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+const{useState,useEffect,useMemo,useCallback,createContext,useContext}=React;
+
+/* ═══ CONFIG ════════════════════════════════════════ */
+const GH_OWNER="ahmedalshaghdari-hub";
+const GH_DB_REPO="iam-brand-db";
+const TOKEN_KEY="iam_ghtoken_v1";
+let _sha=null,_cache=null,_writing=false,_queue=[];
+const getToken=()=>localStorage.getItem(TOKEN_KEY)||'';
+const setToken=t=>localStorage.setItem(TOKEN_KEY,t);
+
+/* ═══ GITHUB SYNC ════════════════════════════════════ */
+async function ghRead(){
+  const t=getToken();if(!t)throw new Error('no token');
+  const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_DB_REPO}/contents/data.json`,
+    {headers:{Authorization:`Bearer ${t}`,Accept:'application/vnd.github.v3+json'}});
+  if(!r.ok)throw new Error('read '+r.status);
+  const f=await r.json();_sha=f.sha;
+  _cache=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\s/g,'')))));
+  ['products','sales','expenses','capital','withdrawals','campaigns'].forEach(k=>{if(!_cache[k])_cache[k]={};});
+  return _cache;
+}
+async function ghWrite(updater){return new Promise((res,rej)=>{_queue.push({updater,res,rej});processQ();});}
+async function processQ(){
+  if(_writing||!_queue.length)return;_writing=true;
+  const{updater,res,rej}=_queue.shift();
+  try{
+    const data=_cache?JSON.parse(JSON.stringify(_cache)):await ghRead();
+    ['products','sales','expenses','capital','withdrawals','campaigns'].forEach(k=>{if(!data[k])data[k]={};});
+    updater(data);data.ts=Date.now();
+    const content=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_DB_REPO}/contents/data.json`,{
+      method:'PUT',headers:{Authorization:`Bearer ${getToken()}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
+      body:JSON.stringify({message:'sync',content,sha:_sha})
+    });
+    if(r.status===409){await ghRead();_writing=false;_queue.unshift({updater,res,rej});return processQ();}
+    if(!r.ok)throw new Error('write '+r.status);
+    const result=await r.json();_sha=result.content.sha;_cache=data;res(data);
+  }catch(e){rej(e);}finally{_writing=false;processQ();}
+}
+
+/* ═══ ACCOUNTS & TABS ════════════════════════════════ */
+// احمد 92.5%  ·  منصور 5%  ·  عبدالقادر 2.5%
+const ACCOUNTS=[
+  {id:'ahmed',  name:'أحمد',        pct:.925, color:'#6D28D9',bg:'#F5F3FF',border:'#C4B5FD'},
+  {id:'mansour',name:'منصور',       pct:.05,  color:'#047857',bg:'#ECFDF5',border:'#A7F3D0'},
+  {id:'aq',     name:'عبدالقادر',   pct:.025, color:'#DC2626',bg:'#FEF2F2',border:'#FECACA'},
+];
+const ADMIN_TABS=[
+  {id:0,ico:'🏠',lbl:'الرئيسية'},{id:1,ico:'📦',lbl:'المنتجات'},
+  {id:2,ico:'💰',lbl:'المبيعات'},{id:3,ico:'📊',lbl:'المصاريف'},
+  {id:4,ico:'🧮',lbl:'الحاسبة'},{id:5,ico:'🏦',lbl:'الصناديق'},
+  {id:6,ico:'💼',lbl:'رأس المال'},{id:7,ico:'📅',lbl:'التقارير'},
+  {id:8,ico:'📈',lbl:'الأرباح'},{id:9,ico:'📣',lbl:'الحملات'},
+  {id:10,ico:'⚙️',lbl:'الإعدادات'},
+];
+const MANSOUR_TABS=[{id:1,ico:'📦',lbl:'المنتجات'},{id:2,ico:'💰',lbl:'المبيعات'}];
+const AQ_TABS=[{id:3,ico:'📊',lbl:'المصاريف'}];
+
+const EXP_TYPES=['تسويق','شحن','إيجار','تشغيل','أخرى'];
+const CATS=['عناية بالبشرة','عطور','شعر','مكياج','منظفات','أخرى'];
+const MN=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const PLATFORMS=['انستغرام','تيك توك','سناب شات','تويتر/X','يوتيوب','جوجل','أخرى'];
+const AuthCtx=createContext(null);
+
+/* ═══ HELPERS ════════════════════════════════════════ */
+const fmt=n=>(+(n)||0).toLocaleString('ar-EG',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtN=n=>(+(n)||0).toLocaleString('ar-EG',{maximumFractionDigits:0});
+const today=()=>new Date().toISOString().split('T')[0];
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const mkMonth=d=>(d||'').slice(0,7);
+const mName=k=>{if(!k)return'';const[y,m]=k.split('-');return`${MN[+m-1]||''} ${y}`;};
+function notify(msg){const el=document.getElementById('notif');if(!el)return;el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600);}
+
+/* total unit cost including shipping+marketing per unit */
+const unitCost=p=>(+p.buyP||0)+(+p.unitShip||0)+(+p.unitMkt||0);
+
+const calcFin=(sales,expenses,withdrawals,mFilter=null)=>{
+  const f=mFilter?x=>mkMonth(x.date)===mFilter:()=>true;
+  const s=sales.filter(f),e=expenses.filter(f),w=withdrawals.filter(f);
+  const totalRev=s.reduce((a,x)=>a+(x.revenue||0),0);
+  const totalCost=s.reduce((a,x)=>a+(x.cost||0),0);
+  const gross=totalRev-totalCost;
+  const totalExp=e.reduce((a,x)=>a+(x.amount||0),0);
+  const net=gross-totalExp;
+  const accs=ACCOUNTS.map(ac=>{
+    const share=net*ac.pct;
+    const drawn=w.filter(x=>x.pid===ac.id).reduce((a,x)=>a+(x.amount||0),0);
+    return{...ac,share,drawn,balance:share-drawn};
+  });
+  return{totalRev,totalCost,gross,totalExp,net,accs,count:s.length};
+};
+
+/* ═══ EXCEL EXPORT ════════════════════════════════════ */
+const exportExcel=(products,sales,expenses,withdrawals,capital,campaigns)=>{
+  const wb=XLSX.utils.book_new();
+  const add=(n,rows)=>{if(rows.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),n);};
+  add('المنتجات',products.map(p=>({'اسم المنتج':p.name,'الفئة':p.cat,'الوحدة':p.unit,'الباركود':p.barcode||'','سعر الشراء':+p.buyP||0,'شحن/وحدة':+p.unitShip||0,'تسويق/وحدة':+p.unitMkt||0,'إجمالي التكلفة':unitCost(p),'سعر البيع':+p.sellP||0,'المخزون':+p.stock||0,'هامش %':unitCost(p)>0?+((p.sellP-unitCost(p))/unitCost(p)*100).toFixed(1):0})));
+  const ss=[...sales].sort((a,b)=>a.date.localeCompare(b.date));
+  add('المبيعات',ss.map(s=>({'التاريخ':s.date,'العميل':s.note||'','إجمالي البيع':+s.revenue||0,'الخصم':+s.discount||0,'شحن إضافي':+s.extraShip||0,'تكلفة البضاعة':+s.cost||0,'الربح الإجمالي':+s.profit||0})));
+  add('المصاريف',[...expenses].sort((a,b)=>a.date.localeCompare(b.date)).map(e=>({'التاريخ':e.date,'النوع':e.type,'الوصف':e.desc,'المبلغ':+e.amount||0})));
+  add('رأس المال',[...capital].sort((a,b)=>a.date.localeCompare(b.date)).map(c=>{const ac=ACCOUNTS.find(x=>x.id===c.pid);return{'التاريخ':c.date,'الشريك':ac?.name||c.pid,'المبلغ':+c.amount||0,'الوصف':c.note||''};}));
+  add('السحوبات',[...withdrawals].sort((a,b)=>a.date.localeCompare(b.date)).map(w=>{const ac=ACCOUNTS.find(x=>x.id===w.pid);return{'التاريخ':w.date,'الحساب':ac?.name||w.pid,'المبلغ':+w.amount||0,'ملاحظة':w.note||''};}));
+  add('الحملات الإعلانية',[...campaigns].sort((a,b)=>a.date.localeCompare(b.date)).map(c=>({'التاريخ':c.date,'المنصة':c.platform,'الوصف':c.desc||'','الميزانية':+c.budget||0,'الوصول':+c.reach||0,'النقرات':+c.clicks||0,'الطلبات':+c.orders||0,'الإيرادات':+c.revenue||0,'ROAS':c.budget>0?+((c.revenue/c.budget).toFixed(2)):0,'ROI %':c.budget>0?+(((c.revenue-c.budget)/c.budget*100).toFixed(1)):0})));
+  const fin=calcFin(sales,expenses,withdrawals);
+  add('ملخص الصناديق',fin.accs.map(ac=>{const cap=capital.filter(c=>c.pid===ac.id).reduce((a,x)=>a+(x.amount||0),0);return{'الحساب':ac.name,'النسبة':`${(ac.pct*100).toFixed(1)}%`,'رأس المال':cap,'حصة الأرباح':+ac.share.toFixed(2),'المسحوب':+ac.drawn.toFixed(2),'الرصيد الكلي':+(cap+ac.share-ac.drawn).toFixed(2)};}));
+  const allYrs=[...new Set([...sales,...expenses].map(x=>(x.date||'').slice(0,4)).filter(Boolean))];
+  if(!allYrs.length)allYrs.push(String(new Date().getFullYear()));
+  const monthly=[];
+  allYrs.sort().forEach(yr=>{for(let m=1;m<=12;m++){const mk=`${yr}-${String(m).padStart(2,'0')}`;const mf=calcFin(sales,expenses,withdrawals,mk);if(mf.totalRev>0||mf.totalExp>0)monthly.push({'السنة':yr,'الشهر':MN[m-1],'المبيعات':+mf.totalRev.toFixed(2),'تكلفة البضاعة':+mf.totalCost.toFixed(2),'إجمالي الربح':+mf.gross.toFixed(2),'المصاريف':+mf.totalExp.toFixed(2),'صافي الربح':+mf.net.toFixed(2),'أحمد 92.5%':+(mf.net*.925).toFixed(2),'منصور 5%':+(mf.net*.05).toFixed(2),'عبدالقادر 2.5%':+(mf.net*.025).toFixed(2)});}});
+  add('الأرباح الشهرية',monthly);
+  XLSX.writeFile(wb,`IAM_Brand_${today()}.xlsx`);notify('✅ تم تصدير Excel!');
+};
+
+/* ═══ UI ATOMS ════════════════════════════════════════ */
+const Inp=({label,req,...p})=><div className="fg">{label&&<label>{label}{req&&<span style={{color:'#EF4444'}}> *</span>}</label>}<input className="fc" {...p}/></div>;
+const Sel=({label,children,...p})=><div className="fg">{label&&<label>{label}</label>}<select className="fc" {...p}>{children}</select></div>;
+const Btn=({children,v='p',style={},...p})=>{const c={p:'bp',s:'bs',d:'bd',g:'bg2',xl:'bxl',w:'bw'};return<button className={`btn ${c[v]||'bp'}`} style={style} {...p}>{children}</button>;};
+const Badge=({children,color='#6D28D9',bg='#F5F3FF'})=><span className="badge" style={{color,background:bg}}>{children}</span>;
+const KPI=({ico,lbl,val,sub,color='#6D28D9',bg='#F5F3FF'})=>(
+  <div className="kcard"><div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+    <div><div style={{fontSize:11,color:'#64748B',fontWeight:600,marginBottom:5}}>{lbl}</div>
+      <div style={{fontSize:16,fontWeight:800,color,lineHeight:1.3}}>{val}</div>
+      {sub&&<div style={{fontSize:11,color:'#94A3B8',marginTop:3}}>{sub}</div>}
+    </div>
+    <div style={{fontSize:18,background:bg,borderRadius:9,padding:'5px 7px',flexShrink:0,marginRight:6}}>{ico}</div>
+  </div></div>
+);
+
+/* ═══ SETUP SCREEN ════════════════════════════════════ */
+function SetupScreen({onDone}){
+  const[tok,setTok]=useState('');const[err,setErr]=useState('');const[loading,setLoading]=useState(false);
+  const go=async()=>{if(!tok.trim()){setErr('أدخل الرمز أولاً');return;}setLoading(true);setErr('');setToken(tok.trim());
+    try{await ghRead();onDone();}catch(e){setErr('الرمز غير صحيح.');localStorage.removeItem(TOKEN_KEY);}finally{setLoading(false);}};
+  return(<div className="setup-bg"><div className="auth-card">
+    <div style={{textAlign:'center',marginBottom:20}}><div style={{fontSize:40}}>✨</div>
+      <h2 style={{fontSize:18,fontWeight:900,color:'#1E293B',margin:'6px 0 3px'}}>IAM Brand</h2>
+      <p style={{fontSize:12,color:'#94A3B8'}}>نظام المحاسبة الذكي</p>
+    </div>
+    <div style={{background:'#F5F3FF',borderRadius:12,padding:'12px 14px',marginBottom:14,border:'1px solid #DDD6FE',fontSize:13,color:'#4C1D95',lineHeight:1.8}}>
+      📌 أدخل رمز الاتصال (يُعطيك إياه أحمد) — يُحفظ تلقائياً على هذا الجهاز
+    </div>
+    <div className="fg" style={{marginBottom:12}}>
+      <label>رمز الاتصال</label>
+      <input className="fc" type="password" value={tok} onChange={e=>{setTok(e.target.value);setErr('');}} placeholder="ghp_..." onKeyDown={e=>e.key==='Enter'&&go()} style={{direction:'ltr',textAlign:'left'}}/>
+    </div>
+    {err&&<div style={{background:'#FEF2F2',border:'1px solid #FECACA',color:'#DC2626',borderRadius:9,padding:'8px 12px',fontSize:13,marginBottom:10}}>{err}</div>}
+    <button className="btn bp blg" onClick={go} disabled={loading}>{loading?'⏳ جاري التحقق...':'✅ اتصل وابدأ'}</button>
+  </div></div>);
+}
+
+/* ═══ LOGIN ═══════════════════════════════════════════ */
+function LoginScreen({onLogin,cfg}){
+  const[sel,setSel]=useState(null);const[pwd,setPwd]=useState('');const[err,setErr]=useState('');
+  const users={ahmed:{name:'أحمد',ico:'👑',role:'مالك وأدمن',cls:'a'},mansour:{name:'منصور',ico:'🤝',role:'شريك',cls:'m'},aq:{name:'عبدالقادر',ico:'📊',role:'مصاريف فقط',cls:'q'}};
+  const doLogin=()=>{
+    if(!sel){setErr('اختر حسابك');return;}
+    const keys={ahmed:'pwd_ahmed',mansour:'pwd_mansour',aq:'pwd_aq'};
+    const expected=cfg[keys[sel]]||{ahmed:'1234',mansour:'5678',aq:'9012'}[sel];
+    if(pwd===expected)onLogin({id:sel,...users[sel],role:sel==='ahmed'?'admin':sel});
+    else{setErr('كلمة مرور خاطئة');setPwd('');}
+  };
+  return(<div className="login-bg"><div className="auth-card">
+    <div style={{textAlign:'center',marginBottom:20}}>
+      <div style={{fontSize:40}}>✨</div>
+      <h1 style={{fontSize:19,fontWeight:900,color:'#1E293B',margin:'6px 0 3px'}}>IAM Brand</h1>
+      <p style={{fontSize:12,color:'#94A3B8'}}>نظام المحاسبة الذكي ☁️</p>
+    </div>
+    <p style={{fontSize:13,fontWeight:700,color:'#475569',marginBottom:10}}>اختر حسابك:</p>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:14}}>
+      {Object.entries(users).map(([id,u])=>(<button key={id} className={`upick ${sel===id?u.cls:''}`} onClick={()=>{setSel(id);setErr('');}}>
+        <div style={{fontSize:22,marginBottom:3}}>{u.ico}</div>
+        <div style={{fontSize:12,fontWeight:800,color:'#1E293B'}}>{u.name}</div>
+        <div style={{fontSize:10,color:'#94A3B8',marginTop:1}}>{u.role}</div>
+      </button>))}
+    </div>
+    <Inp label="كلمة المرور" type="password" value={pwd} onChange={e=>{setPwd(e.target.value);setErr('');}} onKeyDown={e=>e.key==='Enter'&&doLogin()} placeholder="أدخل كلمة المرور"/>
+    {err&&<div style={{color:'#DC2626',fontSize:13,textAlign:'center',marginTop:8}}>{err}</div>}
+    <button className="btn bp blg" onClick={doLogin} style={{marginTop:14}}>دخول ←</button>
+    <div style={{marginTop:10,padding:'8px 10px',background:'#F8FAFC',borderRadius:9,fontSize:11,color:'#64748B',textAlign:'center'}}>أحمد: 1234 · منصور: 5678 · عبدالقادر: 9012</div>
+  </div></div>);
+}
+
+/* ═══ DASHBOARD ═══════════════════════════════════════ */
+function Dashboard({sales,expenses,withdrawals,capital,accsData,onExcel}){
+  const cm=today().slice(0,7);
+  const ms=useMemo(()=>calcFin(sales,expenses,withdrawals,cm),[sales,expenses,withdrawals]);
+  const all=useMemo(()=>calcFin(sales,expenses,withdrawals),[sales,expenses,withdrawals]);
+  const totalCap=capital.reduce((a,c)=>a+(c.amount||0),0);
+  const thisMonthCamp=useMemo(()=>{/* campaigns spending this month */return 0;},[]);
+  const mktExp=expenses.filter(e=>mkMonth(e.date)===cm&&e.type==='تسويق').reduce((a,e)=>a+(e.amount||0),0);
+  const mktRev=ms.totalRev;
+  const roas=mktExp>0?(mktRev/mktExp).toFixed(1):null;
+  const growth=useMemo(()=>{
+    const prev=`${+cm.slice(0,4)}-${String(+cm.slice(5,7)-1).padStart(2,'0')}`;
+    const cm2=calcFin(sales,expenses,withdrawals,cm);const pm=calcFin(sales,expenses,withdrawals,prev);
+    if(pm.totalRev===0)return null;return((cm2.totalRev-pm.totalRev)/pm.totalRev*100).toFixed(1);
+  },[sales,expenses,withdrawals,cm]);
+  const top3=useMemo(()=>{
+    const cnt={};sales.forEach(s=>(s.items||[]).forEach(it=>{if(it.pname){cnt[it.pname]=(cnt[it.pname]||0)+(+it.qty||0);}}));
+    return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  },[sales]);
+  return(<div>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4,gap:8,flexWrap:'wrap'}}>
+      <div><h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>🏠 لوحة التحكم</h2><p style={{fontSize:13,color:'#94A3B8'}}>هذا الشهر: {mName(cm)}</p></div>
+      <button className="btn bxl" onClick={onExcel} style={{fontSize:13,padding:'8px 14px'}}>📊 Excel</button>
+    </div>
+    <div className="kgrid">
+      <KPI ico="💰" lbl="مبيعات الشهر" val={`${fmt(ms.totalRev)} ر.ي`} color="#047857" bg="#ECFDF5" sub={`${ms.count} فاتورة`}/>
+      <KPI ico="💹" lbl="إجمالي الربح" val={`${fmt(ms.gross)} ر.ي`} color="#6D28D9" bg="#F5F3FF"/>
+      <KPI ico="💸" lbl="المصاريف" val={`${fmt(ms.totalExp)} ر.ي`} color="#DC2626" bg="#FEF2F2"/>
+      <KPI ico="✅" lbl="صافي الربح" val={`${fmt(ms.net)} ر.ي`} color={ms.net>=0?'#047857':'#DC2626'} bg={ms.net>=0?'#ECFDF5':'#FEF2F2'}/>
+      {roas&&<KPI ico="📣" lbl="ROAS التسويق" val={`${roas}x`} color={roas>=3?'#047857':'#DC2626'} bg={roas>=3?'#ECFDF5':'#FEF2F2'} sub="عائد كل ريال تسويق"/>}
+      {growth&&<KPI ico="📈" lbl="نمو المبيعات" val={`${growth>0?'+':''}${growth}%`} color={growth>=0?'#047857':'#DC2626'} bg={growth>=0?'#ECFDF5':'#FEF2F2'} sub="مقارنة بالشهر الماضي"/>}
+      <KPI ico="💼" lbl="رأس المال الكلي" val={`${fmt(totalCap)} ر.ي`} color="#92400E" bg="#FFFBEB"/>
+      <KPI ico="🏆" lbl="صافي الربح الكلي" val={`${fmt(all.net)} ر.ي`} color="#6D28D9" bg="#F5F3FF" sub="منذ البداية"/>
+    </div>
+    <div className="card">
+      <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>💼 الصناديق الكلية</div>
+      <div className="pcgrid">{accsData.map(ac=>(
+        <div key={ac.id} className="pc" style={{background:ac.bg,border:`1.5px solid ${ac.border}`}}>
+          <div style={{fontSize:13,color:ac.color,fontWeight:800,marginBottom:2}}>{ac.name} <span style={{fontWeight:500,fontSize:11}}>({(ac.pct*100).toFixed(1)}%)</span></div>
+          <div style={{fontSize:20,fontWeight:900,color:ac.netBalance>=0?ac.color:'#DC2626',margin:'3px 0'}}>{fmt(ac.netBalance)}<span style={{fontSize:12}}> ر.ي</span></div>
+          <div style={{fontSize:11,color:'#64748B'}}>ربح: {fmt(ac.share)} · سحب: {fmt(ac.drawn)}</div>
+        </div>
+      ))}</div>
+    </div>
+    {top3.length>0&&<div className="card"><div style={{fontWeight:800,fontSize:14,marginBottom:10}}>🏆 الأكثر مبيعاً</div>
+      {top3.map(([name,qty],i)=>(<div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid #F1F5F9'}}>
+        <span style={{fontWeight:600,fontSize:13}}>{['🥇','🥈','🥉'][i]} {name}</span>
+        <span className="tag-purple">{qty} وحدة</span>
+      </div>))}
+    </div>}
+  </div>);
+}
+
+/* ═══ PRODUCTS ════════════════════════════════════════ */
+function Products({products,onWrite}){
+  const{user}=useContext(AuthCtx);const isAdmin=user.role==='admin';
+  const empty={name:'',cat:CATS[0],unit:'قطعة',buyP:'',unitShip:'',unitMkt:'',sellP:'',stock:'',barcode:'',image:''};
+  const[form,setForm]=useState(empty);const[editId,setEditId]=useState(null);const[q,setQ]=useState('');
+  const s=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+  const submit=()=>{if(!form.name||!form.sellP)return;const id=editId||uid();onWrite(d=>d.products[id]={...form,buyP:+form.buyP||0,unitShip:+form.unitShip||0,unitMkt:+form.unitMkt||0,sellP:+form.sellP||0,stock:+form.stock||0,id});setForm(empty);setEditId(null);notify('✅ تم الحفظ');};
+  const totalCostPreview=+form.buyP+(+form.unitShip||0)+(+form.unitMkt||0);
+  const marginPreview=totalCostPreview>0?((+form.sellP-totalCostPreview)/totalCostPreview*100).toFixed(1):null;
+  const filtered=products.filter(p=>!q||p.name.includes(q)||(p.barcode||'').includes(q));
+  return(<div>
+    <h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>📦 المنتجات</h2><p style={{fontSize:13,color:'#94A3B8',marginBottom:14}}>{products.length} منتج</p>
+    <div className="card" style={{border:editId?'2px solid #A78BFA':'1px solid #EDE9FE'}}>
+      <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>{editId?'✏️ تعديل المنتج':'➕ إضافة منتج'}</div>
+      <div className="fgrid">
+        <Inp label="الاسم ✶" req value={form.name} onChange={s('name')} placeholder="اسم المنتج"/>
+        <Sel label="الفئة" value={form.cat} onChange={s('cat')}>{CATS.map(c=><option key={c}>{c}</option>)}</Sel>
+        <Inp label="الوحدة" value={form.unit} onChange={s('unit')} placeholder="قطعة/مل/جم"/>
+        <div className="fg"><label>الباركود</label>
+          <div style={{display:'flex',gap:6}}>
+            <input className="fc" style={{flex:1,direction:'ltr'}} value={form.barcode} onChange={s('barcode')} placeholder="أدخل أو امسح"/>
+            <button type="button" className="btn bg2" style={{padding:'8px 10px',flexShrink:0}} onClick={()=>{
+              if(!('BarcodeDetector' in window)){notify('المتصفح لا يدعم المسح');return;}
+              const vid=document.createElement('video');const cnv=document.createElement('canvas');
+              navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(stream=>{
+                vid.srcObject=stream;vid.play();const bd=new BarcodeDetector();
+                const scan=()=>requestAnimationFrame(async()=>{if(vid.readyState===4){cnv.width=vid.videoWidth;cnv.height=vid.videoHeight;cnv.getContext('2d').drawImage(vid,0,0);try{const r=await bd.detect(cnv);if(r.length>0){setForm(p=>({...p,barcode:r[0].rawValue}));stream.getTracks().forEach(t=>t.stop());notify('✅ باركود: '+r[0].rawValue);return;}}catch(e){}};scan();});scan();
+              }).catch(()=>notify('❌ تعذر فتح الكاميرا'));
+            }}>📷</button>
+          </div>
+        </div>
+        <Inp label="سعر الشراء" type="number" value={form.buyP} onChange={s('buyP')} placeholder="0"/>
+        <Inp label="تكلفة الشحن/وحدة" type="number" value={form.unitShip} onChange={s('unitShip')} placeholder="0"/>
+        <Inp label="تكلفة التسويق/وحدة" type="number" value={form.unitMkt} onChange={s('unitMkt')} placeholder="0"/>
+        <Inp label="سعر البيع ✶" req type="number" value={form.sellP} onChange={s('sellP')} placeholder="0"/>
+        <Inp label="المخزون" type="number" value={form.stock} onChange={s('stock')} placeholder="0"/>
+      </div>
+      {totalCostPreview>0&&+form.sellP>0&&<div style={{display:'flex',gap:10,marginBottom:12,flexWrap:'wrap'}}>
+        <span className="tag-purple">إجمالي التكلفة: {fmt(totalCostPreview)} ر.ي</span>
+        <span className={marginPreview>=0?'tag-green':'tag-red'}>الهامش: {marginPreview}%</span>
+      </div>}
+      <div className="fg" style={{marginBottom:12}}>
+        <label>صورة المنتج</label>
+        <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+          {form.image&&<img src={form.image} style={{width:52,height:52,borderRadius:8,objectFit:'cover',border:'2px solid #EDE9FE'}}/>}
+          <label style={{flex:1,cursor:'pointer',background:'#F8FAFC',border:'1.5px dashed #CBD5E1',borderRadius:10,padding:'8px 12px',textAlign:'center',fontSize:13,color:'#64748B',minWidth:120}}>
+            📷 اختر صورة<input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{const img=new Image();img.onload=()=>{const MAX=220;let w=img.width,h=img.height;if(w>h&&w>MAX){h=h*MAX/w;w=MAX;}else if(h>w&&h>MAX){w=w*MAX/h;h=MAX;}else if(w>MAX){w=h=MAX;}const cnv=document.createElement('canvas');cnv.width=w;cnv.height=h;cnv.getContext('2d').drawImage(img,0,0,w,h);setForm(p=>({...p,image:cnv.toDataURL('image/jpeg',.65)}));};img.src=ev.target.result;};reader.readAsDataURL(file);}}/>
+          </label>
+          {form.image&&<Btn v="d" style={{padding:'6px 10px',fontSize:12}} onClick={()=>setForm(p=>({...p,image:''}))}>✕</Btn>}
+        </div>
+      </div>
+      <div style={{display:'flex',gap:8}}><Btn onClick={submit}>{editId?'💾 حفظ':'➕ إضافة'}</Btn>{editId&&<Btn v="g" onClick={()=>{setForm(empty);setEditId(null);}}>إلغاء</Btn>}</div>
+    </div>
+    <div style={{marginBottom:10}}><Inp value={q} onChange={e=>setQ(e.target.value)} placeholder="🔍 بحث بالاسم أو الباركود..." style={{maxWidth:280}}/></div>
+    <div className="card"><div className="twrap"><table>
+      <thead><tr><th></th><th>المنتج</th><th>الفئة</th><th>الباركود</th>{isAdmin&&<th>سعر الشراء</th>}{isAdmin&&<th>التكلفة الكلية</th>}<th>سعر البيع</th><th>المخزون</th>{isAdmin&&<th>هامش%</th>}<th></th></tr></thead>
+      <tbody>{filtered.length===0?<tr><td colSpan={10} style={{textAlign:'center',padding:28,color:'#94A3B8'}}>لا توجد منتجات</td></tr>
+      :filtered.map(p=>{const uc=unitCost(p);const m=uc>0?((p.sellP-uc)/uc*100).toFixed(1)+'%':'—';return(<tr key={p.id}>
+        <td style={{width:40}}>{p.image?<img src={p.image} style={{width:34,height:34,borderRadius:6,objectFit:'cover'}}/>:<span style={{fontSize:18}}>📦</span>}</td>
+        <td style={{fontWeight:700}}>{p.name}</td><td><Badge>{p.cat}</Badge></td>
+        <td style={{color:'#64748B',fontSize:12,direction:'ltr'}}>{p.barcode||'—'}</td>
+        {isAdmin&&<td style={{color:'#DC2626'}}>{fmt(p.buyP)}</td>}
+        {isAdmin&&<td style={{color:'#92400E',fontWeight:700}}>{fmt(uc)}</td>}
+        <td style={{color:'#047857',fontWeight:700}}>{fmt(p.sellP)}</td>
+        <td><span className={p.stock<5?'tag-red':'tag-green'}>{p.stock}</span></td>
+        {isAdmin&&<td style={{color:parseFloat(m)>=30?'#047857':'#DC2626',fontWeight:700}}>{m}</td>}
+        <td><div style={{display:'flex',gap:3}}>
+          {isAdmin&&<Btn v="g" style={{padding:'4px 8px',fontSize:11}} onClick={()=>{setForm({name:p.name,cat:p.cat,unit:p.unit,buyP:p.buyP,unitShip:p.unitShip||0,unitMkt:p.unitMkt||0,sellP:p.sellP,stock:p.stock,barcode:p.barcode||'',image:p.image||''});setEditId(p.id);}}>✏️</Btn>}
+          {isAdmin&&<Btn v="d" style={{padding:'4px 8px',fontSize:11}} onClick={()=>{if(window.confirm('حذف؟')){onWrite(d=>delete d.products[p.id]);notify('🗑️ تم الحذف');}}}>🗑️</Btn>}
+        </div></td>
+      </tr>);})}
+      </tbody>
+    </table></div></div>
+  </div>);
+}
+
+/* ═══ SALES ═══════════════════════════════════════════ */
+function Sales({sales,products,onWrite}){
+  const{user}=useContext(AuthCtx);const isAdmin=user.role==='admin';
+  const ei={pid:'',pname:'',qty:1,sellP:0,buyP:0,unitShip:0,unitMkt:0};
+  const[date,setDate]=useState(today());const[note,setNote]=useState('');
+  const[items,setItems]=useState([{...ei}]);const[discount,setDiscount]=useState('');const[extraShip,setExtraShip]=useState('');
+  const[filter,setFilter]=useState('');const[open,setOpen]=useState(false);
+  const upd=(i,k,v)=>{const n=[...items];n[i]={...n[i],[k]:v};if(k==='pid'){const pr=products.find(p=>p.id===v);if(pr)n[i]={...n[i],pname:pr.name,sellP:pr.sellP,buyP:+pr.buyP||0,unitShip:+pr.unitShip||0,unitMkt:+pr.unitMkt||0};}setItems(n);};
+  const totals=useMemo(()=>{
+    const subTotal=items.reduce((s,it)=>s+(+it.qty*(+it.sellP)||0),0);
+    const cost=items.reduce((s,it)=>s+(+it.qty*(+it.buyP+(+it.unitShip||0)+(+it.unitMkt||0))||0),0)+(+extraShip||0);
+    const revenue=Math.max(0,subTotal-(+discount||0));
+    return{subTotal,cost,revenue,profit:revenue-cost};
+  },[items,discount,extraShip]);
+  const doSave=()=>{
+    if(!items.some(it=>it.pname||it.sellP>0))return;
+    const id=uid();
+    onWrite(d=>d.sales[id]={id,date,note,items,discount:+discount||0,extraShip:+extraShip||0,revenue:totals.revenue,cost:totals.cost,profit:totals.profit});
+    setItems([{...ei}]);setNote('');setDate(today());setDiscount('');setExtraShip('');setOpen(false);notify('✅ تم حفظ الفاتورة');
+  };
+  const list=[...sales].filter(s=>!filter||s.date.startsWith(filter)).sort((a,b)=>b.date.localeCompare(a.date));
+  return(<div>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4,gap:8,flexWrap:'wrap'}}>
+      <div><h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>💰 المبيعات</h2><p style={{fontSize:13,color:'#94A3B8',margin:0}}>{sales.length} فاتورة</p></div>
+      <Btn onClick={()=>setOpen(!open)}>{open?'✕ إغلاق':'➕ فاتورة جديدة'}</Btn>
+    </div>
+    {open&&<div className="card" style={{marginTop:12,border:'2px solid #A78BFA'}}>
+      <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>🧾 فاتورة جديدة</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 2fr',gap:10,marginBottom:12}}>
+        <Inp label="التاريخ" type="date" value={date} onChange={e=>setDate(e.target.value)}/>
+        <Inp label="العميل/ملاحظة" value={note} onChange={e=>setNote(e.target.value)} placeholder="اسم العميل"/>
+      </div>
+      {items.map((item,i)=>(<div key={i} style={{display:'grid',gridTemplateColumns:'2fr 70px 100px 70px auto',gap:8,marginBottom:8,alignItems:'end'}}>
+        <Sel value={item.pid} onChange={e=>upd(i,'pid',e.target.value)}>
+          <option value="">-- اختر منتج --</option>{products.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+        </Sel>
+        <Inp type="number" value={item.qty} onChange={e=>upd(i,'qty',+e.target.value)} placeholder="كمية"/>
+        <Inp type="number" value={item.sellP} onChange={e=>upd(i,'sellP',+e.target.value)} placeholder="سعر البيع"/>
+        <div style={{padding:'9px 8px',background:'#ECFDF5',borderRadius:10,border:'1.5px solid #A7F3D0',fontSize:12,fontWeight:700,color:'#047857',textAlign:'center'}}>{fmt(+item.qty*+item.sellP)}</div>
+        {items.length>1&&<Btn v="d" style={{padding:'8px 10px'}} onClick={()=>setItems(items.filter((_,idx)=>idx!==i))}>✕</Btn>}
+      </div>))}
+      <Btn v="g" style={{marginBottom:12,fontSize:13}} onClick={()=>setItems([...items,{...ei}])}>＋ صنف</Btn>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
+        <div className="fg"><label>🏷️ خصم (اختياري)</label><input className="fc" type="number" value={discount} onChange={e=>setDiscount(e.target.value)} placeholder="0 ريال خصم"/></div>
+        <div className="fg"><label>🚚 شحن إضافي (اختياري)</label><input className="fc" type="number" value={extraShip} onChange={e=>setExtraShip(e.target.value)} placeholder="0 تكلفة شحن إضافية"/></div>
+      </div>
+      <div style={{background:'#F5F3FF',borderRadius:10,padding:'10px 14px',marginBottom:12,display:'flex',gap:16,flexWrap:'wrap',fontSize:13}}>
+        <span>المجموع: <strong style={{color:'#6D28D9'}}>{fmt(totals.subTotal)}</strong></span>
+        {+discount>0&&<span>بعد الخصم: <strong style={{color:'#047857'}}>{fmt(totals.revenue)}</strong></span>}
+        {isAdmin&&<span>تكلفة البضاعة: <strong style={{color:'#DC2626'}}>{fmt(totals.cost)}</strong></span>}
+        {isAdmin&&<span>الربح: <strong style={{color:totals.profit>=0?'#047857':'#DC2626'}}>{fmt(totals.profit)}</strong></span>}
+      </div>
+      <Btn v="s" onClick={doSave}>✅ حفظ الفاتورة</Btn>
+    </div>}
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',margin:'14px 0 10px',gap:8,flexWrap:'wrap'}}>
+      <span style={{fontWeight:700,fontSize:14}}>السجل ({list.length})</span>
+      <Inp type="month" value={filter} onChange={e=>setFilter(e.target.value)} style={{width:'auto'}}/>
+    </div>
+    <div className="card">{list.length===0?<div style={{textAlign:'center',padding:28,color:'#94A3B8'}}>لا توجد مبيعات</div>
+    :list.map(s=>(<div key={s.id} style={{borderBottom:'1px solid #F1F5F9',padding:'10px 0'}}>
+      <div style={{display:'flex',justifyContent:'space-between',gap:8,flexWrap:'wrap'}}>
+        <div>
+          <div style={{fontWeight:700,fontSize:14}}>🧾 {s.note||'مبيعات'}</div>
+          <div style={{fontSize:11,color:'#94A3B8',margin:'2px 0'}}>{s.date}</div>
+          {s.items?.length>0&&<div style={{fontSize:12,color:'#64748B'}}>{s.items.map(it=>`${it.pname||'منتج'} ×${it.qty}`).join(' · ')}</div>}
+          {(s.discount>0||s.extraShip>0)&&<div style={{fontSize:11,color:'#94A3B8',marginTop:2}}>
+            {s.discount>0&&<span>خصم: {fmt(s.discount)} · </span>}{s.extraShip>0&&<span>شحن إضافي: {fmt(s.extraShip)}</span>}
+          </div>}
+        </div>
+        <div style={{textAlign:'left'}}>
+          <div style={{fontWeight:900,fontSize:17,color:'#047857'}}>{fmt(s.revenue)} ر.ي</div>
+          {isAdmin&&<div style={{fontSize:11,color:'#64748B'}}>ربح: {fmt(s.profit)}</div>}
+          {isAdmin&&<Btn v="d" style={{padding:'3px 10px',fontSize:12,marginTop:5}} onClick={()=>{if(window.confirm('حذف؟')){onWrite(d=>delete d.sales[s.id]);notify('🗑️ تم الحذف');}}}>🗑️</Btn>}
+        </div>
+      </div>
+    </div>))}</div>
+  </div>);
+}
+
+/* ═══ EXPENSES ════════════════════════════════════════ */
+function Expenses({expenses,onWrite}){
+  const{user}=useContext(AuthCtx);const isAdmin=user.role==='admin';
+  const[form,setForm]=useState({date:today(),type:EXP_TYPES[0],desc:'',amount:''});const[filter,setFilter]=useState('');
+  const s=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+  const submit=()=>{if(!form.desc||!form.amount)return;const id=uid();onWrite(d=>d.expenses[id]={...form,id,amount:+form.amount});setForm({date:today(),type:EXP_TYPES[0],desc:'',amount:''});notify('✅ تم التسجيل');};
+  const list=[...expenses].filter(e=>!filter||e.date.startsWith(filter)).sort((a,b)=>b.date.localeCompare(a.date));
+  const byType=useMemo(()=>{const t={};list.forEach(e=>t[e.type]=(t[e.type]||0)+e.amount);return t;},[list]);
+  return(<div>
+    <h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>📊 المصاريف</h2><p style={{fontSize:13,color:'#94A3B8',marginBottom:14}}>{expenses.length} مصروف</p>
+    <div className="card">
+      <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>➕ {user.role==='aq'?'إضافة مصروف':'إضافة مصروف'}</div>
+      <div className="fgrid">
+        <Inp label="التاريخ" type="date" value={form.date} onChange={s('date')}/>
+        <Sel label="النوع" value={form.type} onChange={s('type')}>{EXP_TYPES.map(t=><option key={t}>{t}</option>)}</Sel>
+        <Inp label="الوصف ✶" req value={form.desc} onChange={s('desc')} placeholder="وصف المصروف"/>
+        <Inp label="المبلغ ✶" req type="number" value={form.amount} onChange={s('amount')} placeholder="0"/>
+      </div>
+      <Btn onClick={submit}>💾 إضافة</Btn>
+    </div>
+    {isAdmin&&Object.keys(byType).length>0&&<div className="card" style={{background:'#F5F3FF',border:'1px solid #DDD6FE'}}>
+      <div style={{fontWeight:700,fontSize:13,color:'#6D28D9',marginBottom:10}}>📊 تفصيل المصاريف</div>
+      <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+        {Object.entries(byType).map(([t,v])=><div key={t} style={{background:'white',borderRadius:8,padding:'6px 12px',border:'1px solid #EDE9FE',fontSize:13}}>
+          <span style={{color:'#64748B'}}>{t}:</span> <strong style={{color:'#6D28D9'}}>{fmt(v)}</strong>
+        </div>)}
+      </div>
+    </div>}
+    <div style={{display:'flex',justifyContent:'space-between',marginBottom:10,gap:8,alignItems:'center'}}>
+      <span style={{fontWeight:700,fontSize:14}}>السجل</span>
+      <Inp type="month" value={filter} onChange={e=>setFilter(e.target.value)} style={{width:'auto'}}/>
+    </div>
+    <div className="card">{list.length===0?<div style={{textAlign:'center',padding:28,color:'#94A3B8'}}>لا توجد مصاريف</div>
+    :list.map(e=>(<div key={e.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 0',borderBottom:'1px solid #F1F5F9',gap:8,flexWrap:'wrap'}}>
+      <div><div style={{fontWeight:600,fontSize:13}}><Badge color="#6D28D9" bg="#F5F3FF">{e.type}</Badge> {e.desc}</div><div style={{fontSize:11,color:'#94A3B8',marginTop:2}}>{e.date}</div></div>
+      <div style={{display:'flex',alignItems:'center',gap:8}}>
+        <span style={{fontWeight:800,color:'#DC2626',fontSize:15}}>{fmt(e.amount)} ر.ي</span>
+        {isAdmin&&<Btn v="d" style={{padding:'4px 9px',fontSize:12}} onClick={()=>{if(window.confirm('حذف؟')){onWrite(d=>delete d.expenses[e.id]);notify('🗑️ تم الحذف');}}}>🗑️</Btn>}
+      </div>
+    </div>))}</div>
+  </div>);
+}
+
+/* ═══ COST CALCULATOR ═════════════════════════════════ */
+function CostCalc(){
+  const[f,setF]=useState({buyP:'',ship:'',mkt:'',overhead:'',targetMargin:50,qty:1});
+  const s=k=>e=>setF(p=>({...p,[k]:e.target.value}));
+  const calc=useMemo(()=>{
+    const buy=+f.buyP||0,ship=+f.ship||0,mkt=+f.mkt||0,oh=+f.overhead||0,qty=+f.qty||1;
+    const unitCostV=buy+ship+mkt;const totalUnitCost=unitCostV+(oh/qty);
+    if(totalUnitCost===0)return null;
+    const margin=+f.targetMargin||50;
+    const minPrice=totalUnitCost;
+    const at20=totalUnitCost*1.2;const at40=totalUnitCost*1.4;const at60=totalUnitCost*1.6;
+    const at100=totalUnitCost*2;const atTarget=totalUnitCost*(1+margin/100);
+    const breakeven=oh>0?Math.ceil(oh/(atTarget-unitCostV)):null;
+    return{unitCostV,totalUnitCost,minPrice,at20,at40,at60,at100,atTarget,margin,breakeven};
+  },[f]);
+  return(<div>
+    <h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>🧮 حاسبة التكاليف والتسعير</h2>
+    <p style={{fontSize:13,color:'#94A3B8',marginBottom:14}}>احسب أفضل سعر للبيع وحقق النمو</p>
+    <div className="card" style={{border:'2px solid #A78BFA'}}>
+      <div style={{fontWeight:800,fontSize:14,color:'#6D28D9',marginBottom:12}}>📥 أدخل تكاليف المنتج</div>
+      <div className="fgrid">
+        <Inp label="سعر الشراء (تكلفة المنتج)" type="number" value={f.buyP} onChange={s('buyP')} placeholder="0"/>
+        <Inp label="تكلفة الشحن إليك / وحدة" type="number" value={f.ship} onChange={s('ship')} placeholder="0"/>
+        <Inp label="ميزانية التسويق / وحدة" type="number" value={f.mkt} onChange={s('mkt')} placeholder="0"/>
+        <Inp label="مصاريف ثابتة (إيجار، كهرباء...)" type="number" value={f.overhead} onChange={s('overhead')} placeholder="0"/>
+        <Inp label="عدد الوحدات المتوقع بيعها" type="number" value={f.qty} onChange={s('qty')} placeholder="1"/>
+        <div className="fg">
+          <label>هامش الربح المستهدف: {f.targetMargin}%</label>
+          <input type="range" min="10" max="200" value={f.targetMargin} onChange={s('targetMargin')} style={{width:'100%',marginTop:8,accentColor:'#6D28D9'}}/>
+        </div>
+      </div>
+      {calc&&<div className="calc-result">
+        <div style={{fontWeight:900,fontSize:15,color:'#6D28D9',marginBottom:14}}>📊 نتائج التسعير</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:10,marginBottom:14}}>
+          <div className="kcard"><div style={{fontSize:11,color:'#64748B',fontWeight:600,marginBottom:4}}>التكلفة الإجمالية/وحدة</div><div style={{fontSize:16,fontWeight:900,color:'#DC2626'}}>{fmt(calc.totalUnitCost)} ر.ي</div></div>
+          <div className="kcard"><div style={{fontSize:11,color:'#64748B',fontWeight:600,marginBottom:4}}>الحد الأدنى للبيع</div><div style={{fontSize:16,fontWeight:900,color:'#92400E'}}>{fmt(calc.minPrice)} ر.ي</div><div style={{fontSize:10,color:'#94A3B8'}}>نقطة التعادل فقط</div></div>
+          <div className="kcard" style={{border:'2px solid #A78BFA',background:'#F5F3FF'}}><div style={{fontSize:11,color:'#6D28D9',fontWeight:700,marginBottom:4}}>✨ السعر المقترح ({calc.margin}%)</div><div style={{fontSize:18,fontWeight:900,color:'#6D28D9'}}>{fmt(calc.atTarget)} ر.ي</div>{calc.breakeven&&<div style={{fontSize:10,color:'#94A3B8'}}>تعادل بعد {calc.breakeven} وحدة</div>}</div>
+        </div>
+        <div style={{fontWeight:700,fontSize:13,color:'#475569',marginBottom:8}}>🎯 جدول الأسعار:</div>
+        <div style={{display:'flex',flexDirection:'column',gap:6}}>
+          {[[20,calc.at20,'#94A3B8'],[40,calc.at40,'#047857'],[60,calc.at60,'#059669'],[100,calc.at100,'#6D28D9']].map(([pct,price,col])=>(
+            <div key={pct} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 12px',background:'white',borderRadius:9,border:'1px solid #EDE9FE'}}>
+              <span style={{fontSize:13,fontWeight:600,color:'#475569'}}>هامش {pct}%</span>
+              <div style={{display:'flex',gap:10,alignItems:'center'}}>
+                <span style={{fontSize:15,fontWeight:800,color:col}}>{fmt(price)} ر.ي</span>
+                <span style={{fontSize:11,color:'#94A3B8'}}>ربح {fmt(price-calc.totalUnitCost)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{marginTop:14,padding:'10px 14px',background:'#FFF7ED',borderRadius:10,border:'1px solid #FED7AA'}}>
+          <div style={{fontWeight:700,fontSize:13,color:'#92400E',marginBottom:6}}>💡 توصيات النمو:</div>
+          <div style={{fontSize:13,color:'#78350F',lineHeight:1.8}}>
+            {calc.totalUnitCost>0&&calc.atTarget>0&&<>
+              {+f.mkt/(calc.atTarget)*100>30?<div>⚠️ تكلفة التسويق عالية ({((+f.mkt/calc.atTarget)*100).toFixed(0)}% من السعر) — فكّر في خفضها</div>:<div>✅ نسبة تكلفة التسويق معقولة</div>}
+              {calc.margin<30?<div>⚠️ الهامش المستهدف أقل من 30% — يُنصح برفعه لضمان النمو</div>:<div>✅ الهامش المستهدف جيد للنمو</div>}
+              {calc.breakeven&&<div>📊 تحتاج بيع {calc.breakeven} وحدة لتغطية المصاريف الثابتة</div>}
+              <div>🎯 سعر مقترح للنمو السريع: {fmt(calc.at40)} — {fmt(calc.at60)} ر.ي</div>
+            </>}
+          </div>
+        </div>
+      </div>}
+    </div>
+  </div>);
+}
+
+/* ═══ SAFES ═══════════════════════════════════════════ */
+function Safes({withdrawals,accsData,onWrite}){
+  const{user}=useContext(AuthCtx);const isAdmin=user.role==='admin';
+  const[form,setForm]=useState({pid:'ahmed',date:today(),amount:'',note:''});
+  const s=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+  const submit=()=>{if(!form.amount||+form.amount<=0)return;const id=uid();onWrite(d=>d.withdrawals[id]={...form,id,amount:+form.amount});setForm({pid:'ahmed',date:today(),amount:'',note:''});notify('✅ تم تسجيل السحب');};
+  return(<div>
+    <h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>🏦 الصناديق</h2><p style={{fontSize:13,color:'#94A3B8',marginBottom:14}}>أرصدة وسحوبات الحسابات</p>
+    {isAdmin&&<div className="pcgrid">{accsData.map(ac=>(
+      <div key={ac.id} className="card pc" style={{border:`2px solid ${ac.border}`,margin:0}}>
+        <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+          <div style={{fontWeight:800,color:ac.color,fontSize:15}}>{ac.name}</div>
+          <span className="badge" style={{color:ac.color,background:ac.bg}}>{(ac.pct*100).toFixed(1)}%</span>
+        </div>
+        <div style={{fontSize:22,fontWeight:900,color:ac.netBalance>=0?ac.color:'#DC2626',marginBottom:8}}>{fmt(ac.netBalance)}<span style={{fontSize:13}}> ر.ي</span></div>
+        <div style={{fontSize:11,color:'#64748B',display:'flex',flexDirection:'column',gap:3}}>
+          <div style={{display:'flex',justifyContent:'space-between'}}><span>💼 رأس المال:</span><strong>{fmt(ac.capTotal)}</strong></div>
+          <div style={{display:'flex',justifyContent:'space-between'}}><span>📈 حصة الأرباح:</span><strong style={{color:'#047857'}}>{fmt(ac.share)}</strong></div>
+          <div style={{display:'flex',justifyContent:'space-between'}}><span>💸 المسحوب:</span><strong style={{color:'#DC2626'}}>{fmt(ac.drawn)}</strong></div>
+        </div>
+      </div>
+    ))}</div>}
+    <div className="card" style={{background:'#FFFBEB',border:'2px solid #FCD34D'}}>
+      <div style={{fontWeight:800,fontSize:14,color:'#92400E',marginBottom:12}}>💸 تسجيل سحب</div>
+      <div className="fgrid">
+        <Sel label="الحساب" value={form.pid} onChange={s('pid')}>{isAdmin?ACCOUNTS.map(ac=><option key={ac.id} value={ac.id}>{ac.name}</option>):<option value={user.id}>{user.name}</option>}</Sel>
+        <Inp label="التاريخ" type="date" value={form.date} onChange={s('date')}/>
+        <Inp label="المبلغ ✶" req type="number" value={form.amount} onChange={s('amount')} placeholder="0"/>
+        <Inp label="ملاحظة" value={form.note} onChange={s('note')} placeholder="اختياري"/>
+      </div>
+      <Btn v="w" onClick={submit}>💾 تسجيل السحب</Btn>
+    </div>
+    <div className="card"><div style={{fontWeight:800,fontSize:14,marginBottom:12}}>📋 سجل السحوبات ({withdrawals.length})</div>
+      {withdrawals.length===0?<div style={{textAlign:'center',padding:28,color:'#94A3B8'}}>لا توجد سحوبات</div>
+      :[...withdrawals].sort((a,b)=>b.date.localeCompare(a.date)).map(w=>{const ac=ACCOUNTS.find(x=>x.id===w.pid);return(<div key={w.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 0',borderBottom:'1px solid #F1F5F9',gap:8,flexWrap:'wrap'}}>
+        <div><div style={{fontWeight:600,fontSize:13}}><span style={{color:ac?.color,fontWeight:800}}>{ac?.name}</span>{w.note&&<span style={{color:'#94A3B8'}}> — {w.note}</span>}</div><div style={{fontSize:11,color:'#94A3B8'}}>{w.date}</div></div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <span style={{fontWeight:800,color:'#92400E',fontSize:15}}>{fmt(w.amount)} ر.ي</span>
+          {isAdmin&&<Btn v="d" style={{padding:'4px 9px',fontSize:12}} onClick={()=>{if(window.confirm('حذف؟')){onWrite(d=>delete d.withdrawals[w.id]);notify('🗑️ تم الحذف');}}}>🗑️</Btn>}
+        </div>
+      </div>);})}
+    </div>
+  </div>);
+}
+
+/* ═══ CAPITAL ════════════════════════════════════════ */
+function Capital({capital,accsData,onWrite}){
+  const[form,setForm]=useState({pid:'ahmed',date:today(),amount:'',note:''});
+  const s=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+  const submit=()=>{if(!form.amount||+form.amount<=0)return;const id=uid();onWrite(d=>d.capital[id]={...form,id,amount:+form.amount});setForm({pid:'ahmed',date:today(),amount:'',note:''});notify('✅ تم تسجيل رأس المال');};
+  const total=capital.reduce((a,c)=>a+(c.amount||0),0);
+  return(<div>
+    <h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>💼 رأس المال</h2><p style={{fontSize:13,color:'#94A3B8',marginBottom:14}}>استثمارات الحسابات في IAM Brand</p>
+    <div className="pcgrid">{accsData.map(ac=>(
+      <div key={ac.id} className="pc" style={{background:ac.bg,border:`2px solid ${ac.border}`}}>
+        <div style={{fontWeight:800,color:ac.color,fontSize:15,marginBottom:6}}>{ac.name} ({(ac.pct*100).toFixed(1)}%)</div>
+        <div style={{fontSize:22,fontWeight:900,color:ac.color}}>{fmt(ac.capTotal)}<span style={{fontSize:12}}> ر.ي</span></div>
+        <div style={{fontSize:11,color:'#64748B',marginTop:6}}>
+          <div>ربح: {fmt(ac.share)} · سحب: {fmt(ac.drawn)}</div>
+          <div style={{fontWeight:700,color:ac.netBalance>=0?ac.color:'#DC2626',marginTop:3}}>الرصيد: {fmt(ac.netBalance)}</div>
+          {ac.capTotal>0&&<div style={{color:'#6D28D9',marginTop:2}}>ROI: {(ac.share/ac.capTotal*100).toFixed(1)}%</div>}
+        </div>
+      </div>
+    ))}</div>
+    <div className="card" style={{background:'#F5F3FF',border:'2px solid #C4B5FD'}}>
+      <div style={{fontWeight:800,fontSize:14,color:'#6D28D9',marginBottom:12}}>➕ إضافة رأس مال</div>
+      <div className="fgrid">
+        <Sel label="الحساب" value={form.pid} onChange={s('pid')}>{ACCOUNTS.map(ac=><option key={ac.id} value={ac.id}>{ac.name}</option>)}</Sel>
+        <Inp label="التاريخ" type="date" value={form.date} onChange={s('date')}/>
+        <Inp label="المبلغ ✶" req type="number" value={form.amount} onChange={s('amount')} placeholder="0"/>
+        <Inp label="الوصف" value={form.note} onChange={s('note')} placeholder="رأس مال ابتدائي..."/>
+      </div>
+      <Btn style={{background:'#6D28D9',color:'white'}} onClick={submit}>💾 إضافة</Btn>
+    </div>
+    <div className="card"><div style={{display:'flex',justifyContent:'space-between',marginBottom:12,alignItems:'center'}}>
+      <div style={{fontWeight:800,fontSize:14}}>📋 سجل رأس المال ({capital.length})</div>
+      <span className="tag-purple">الإجمالي: {fmt(total)} ر.ي</span>
+    </div>
+    {capital.length===0?<div style={{textAlign:'center',padding:28,color:'#94A3B8'}}>لم يُسجّل رأس مال بعد</div>
+    :[...capital].sort((a,b)=>b.date.localeCompare(a.date)).map(c=>{const ac=ACCOUNTS.find(x=>x.id===c.pid);return(<div key={c.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 0',borderBottom:'1px solid #F1F5F9',gap:8}}>
+      <div><div style={{fontWeight:600,fontSize:13}}>💼 <span style={{color:ac?.color,fontWeight:800}}>{ac?.name}</span>{c.note&&<span style={{color:'#94A3B8'}}> — {c.note}</span>}</div><div style={{fontSize:11,color:'#94A3B8'}}>{c.date}</div></div>
+      <div style={{display:'flex',alignItems:'center',gap:8}}>
+        <span style={{fontWeight:800,color:'#6D28D9',fontSize:15}}>{fmt(c.amount)} ر.ي</span>
+        <Btn v="d" style={{padding:'4px 9px',fontSize:12}} onClick={()=>{if(window.confirm('حذف؟')){onWrite(d=>delete d.capital[c.id]);notify('🗑️ تم الحذف');}}}>🗑️</Btn>
+      </div>
+    </div>);})}
+    </div>
+  </div>);
+}
+
+/* ═══ MONTHLY REPORT ══════════════════════════════════ */
+function MonthlyReport({sales,expenses,withdrawals}){
+  const[sel,setSel]=useState(today().slice(0,7));
+  const stats=useMemo(()=>calcFin(sales,expenses,withdrawals,sel),[sales,expenses,withdrawals,sel]);
+  const mS=[...sales].filter(s=>mkMonth(s.date)===sel).sort((a,b)=>b.date.localeCompare(a.date));
+  const mE=[...expenses].filter(e=>mkMonth(e.date)===sel).sort((a,b)=>b.date.localeCompare(a.date));
+  const byType=useMemo(()=>{const t={};mE.forEach(e=>t[e.type]=(t[e.type]||0)+e.amount);return t;},[mE]);
+  return(<div>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14,gap:8,flexWrap:'wrap'}}>
+      <div><h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>📅 التقرير الشهري</h2><p style={{fontSize:13,color:'#94A3B8',margin:0}}>اختر شهر</p></div>
+      <Inp type="month" value={sel} onChange={e=>setSel(e.target.value)} style={{width:'auto'}}/>
+    </div>
+    <div style={{background:'linear-gradient(135deg,#6D28D9,#5B21B6)',color:'white',borderRadius:14,padding:'14px 18px',marginBottom:14,textAlign:'center'}}><h3 style={{margin:0,fontSize:18,fontWeight:900}}>تقرير {mName(sel)}</h3></div>
+    <div className="kgrid">
+      <KPI ico="🧾" lbl="الفواتير" val={stats.count} color="#6D28D9" bg="#F5F3FF"/>
+      <KPI ico="💰" lbl="الإيرادات" val={`${fmt(stats.totalRev)} ر.ي`} color="#047857" bg="#ECFDF5"/>
+      <KPI ico="📦" lbl="تكلفة البضاعة" val={`${fmt(stats.totalCost)} ر.ي`} color="#92400E" bg="#FFFBEB"/>
+      <KPI ico="💹" lbl="إجمالي الربح" val={`${fmt(stats.gross)} ر.ي`} color="#6D28D9" bg="#F5F3FF"/>
+      <KPI ico="💸" lbl="المصاريف" val={`${fmt(stats.totalExp)} ر.ي`} color="#DC2626" bg="#FEF2F2"/>
+      <KPI ico="✅" lbl="صافي الربح" val={`${fmt(stats.net)} ر.ي`} color={stats.net>=0?'#047857':'#DC2626'} bg={stats.net>=0?'#ECFDF5':'#FEF2F2'}/>
+    </div>
+    {Object.keys(byType).length>0&&<div className="card" style={{background:'#F5F3FF',border:'1px solid #DDD6FE'}}>
+      <div style={{fontWeight:700,fontSize:13,color:'#6D28D9',marginBottom:8}}>📊 تفصيل المصاريف</div>
+      <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>{Object.entries(byType).map(([t,v])=><span key={t} style={{background:'white',borderRadius:8,padding:'5px 12px',border:'1px solid #EDE9FE',fontSize:13}}>{t}: <strong style={{color:'#DC2626'}}>{fmt(v)}</strong></span>)}</div>
+    </div>}
+    <div className="card"><div style={{fontWeight:800,fontSize:14,marginBottom:12}}>💼 توزيع أرباح الشهر</div>
+      <div className="pcgrid">{stats.accs.map(ac=>(<div key={ac.id} className="pc" style={{background:ac.bg,border:`2px solid ${ac.border}`}}>
+        <div style={{fontWeight:800,color:ac.color,fontSize:14,marginBottom:6}}>{ac.name} ({(ac.pct*100).toFixed(1)}%)</div>
+        <div style={{fontSize:20,fontWeight:900,color:ac.share>=0?ac.color:'#DC2626'}}>{fmt(ac.share)}<span style={{fontSize:12}}> ر.ي</span></div>
+        <div style={{fontSize:11,color:'#64748B',marginTop:5}}>سحبيات: {fmt(ac.drawn)} · رصيد: <strong style={{color:ac.balance>=0?ac.color:'#DC2626'}}>{fmt(ac.balance)}</strong></div>
+      </div>))}</div>
+    </div>
+    {mS.length>0&&<div className="card"><div style={{fontWeight:800,fontSize:14,marginBottom:10}}>🧾 فواتير الشهر ({mS.length})</div>
+      <div className="twrap"><table><thead><tr>{['التاريخ','العميل','الإيرادات','الخصم','التكلفة','الربح'].map(h=><th key={h}>{h}</th>)}</tr></thead>
+      <tbody>{mS.map(s=><tr key={s.id}><td style={{color:'#64748B'}}>{s.date}</td><td>{s.note||'—'}</td><td style={{fontWeight:700,color:'#047857'}}>{fmt(s.revenue)}</td><td style={{color:'#94A3B8'}}>{s.discount>0?fmt(s.discount):'—'}</td><td style={{color:'#DC2626'}}>{fmt(s.cost)}</td><td style={{fontWeight:700,color:'#6D28D9'}}>{fmt(s.profit)}</td></tr>)}</tbody>
+      </table></div>
+    </div>}
+  </div>);
+}
+
+/* ═══ P&L ANNUAL ══════════════════════════════════════ */
+function PL({sales,expenses,withdrawals,capital}){
+  const cy=String(new Date().getFullYear());const[year,setYear]=useState(cy);
+  const months=Array.from({length:12},(_,i)=>`${year}-${String(i+1).padStart(2,'0')}`);
+  const mData=useMemo(()=>months.map(m=>({key:m,...calcFin(sales,expenses,withdrawals,m)})),[sales,expenses,withdrawals,year]);
+  const tot=useMemo(()=>({totalRev:mData.reduce((s,m)=>s+m.totalRev,0),totalCost:mData.reduce((s,m)=>s+m.totalCost,0),gross:mData.reduce((s,m)=>s+m.gross,0),totalExp:mData.reduce((s,m)=>s+m.totalExp,0),net:mData.reduce((s,m)=>s+m.net,0)}),[mData]);
+  const aP=useMemo(()=>ACCOUNTS.map(ac=>({...ac,share:tot.net*ac.pct,drawn:withdrawals.filter(w=>w.pid===ac.id&&(w.date||'').startsWith(year)).reduce((s,w)=>s+w.amount,0),cap:capital.filter(c=>c.pid===ac.id&&(c.date||'').startsWith(year)).reduce((s,c)=>s+c.amount,0)})),[tot,withdrawals,capital,year]);
+  const years=useMemo(()=>{const all=[...sales,...expenses].map(x=>(x.date||'').slice(0,4)).filter(Boolean);return[...new Set(['2024','2025','2026',...all])].sort();},[sales,expenses]);
+  return(<div>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14,gap:8,flexWrap:'wrap'}}>
+      <div><h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>📈 الأرباح والخسائر</h2><p style={{fontSize:13,color:'#94A3B8',margin:0}}>ملخص سنوي</p></div>
+      <Sel value={year} onChange={e=>setYear(e.target.value)} style={{width:'auto'}}>{years.map(y=><option key={y}>{y}</option>)}</Sel>
+    </div>
+    <div className="kgrid">
+      <KPI ico="💰" lbl="إيرادات السنة" val={`${fmt(tot.totalRev)} ر.ي`} color="#047857" bg="#ECFDF5"/>
+      <KPI ico="💹" lbl="إجمالي الربح" val={`${fmt(tot.gross)} ر.ي`} color="#6D28D9" bg="#F5F3FF"/>
+      <KPI ico="💸" lbl="المصاريف" val={`${fmt(tot.totalExp)} ر.ي`} color="#DC2626" bg="#FEF2F2"/>
+      <KPI ico="✅" lbl="صافي الربح" val={`${fmt(tot.net)} ر.ي`} color={tot.net>=0?'#047857':'#DC2626'} bg={tot.net>=0?'#ECFDF5':'#FEF2F2'}/>
+    </div>
+    <div className="card"><div style={{fontWeight:800,fontSize:14,marginBottom:12}}>💼 توزيع سنة {year}</div>
+      <div className="pcgrid">{aP.map(ac=><div key={ac.id} className="pc" style={{background:ac.bg,border:`2px solid ${ac.border}`}}>
+        <div style={{fontWeight:800,color:ac.color,fontSize:14,marginBottom:4}}>{ac.name} ({(ac.pct*100).toFixed(1)}%)</div>
+        <div style={{fontSize:20,fontWeight:900,color:ac.share>=0?ac.color:'#DC2626',margin:'4px 0'}}>{fmt(ac.share)}<span style={{fontSize:12}}> ر.ي</span></div>
+        <div style={{fontSize:11,color:'#64748B'}}><div>رأس المال: {fmt(ac.cap)} · سحوبات: {fmt(ac.drawn)}</div>{ac.cap>0&&<div style={{color:'#6D28D9',marginTop:2}}>ROI: {(ac.share/ac.cap*100).toFixed(1)}%</div>}</div>
+      </div>)}</div>
+    </div>
+    <div className="card"><div style={{fontWeight:800,fontSize:14,marginBottom:12}}>📊 التفصيل الشهري</div>
+      <div className="twrap"><table style={{minWidth:750}}>
+        <thead><tr style={{background:'#6D28D9',color:'white'}}>{['الشهر','الإيرادات','التكلفة','إجمالي الربح','المصاريف','صافي الربح','أحمد 92.5%','منصور 5%','عبدالقادر 2.5%'].map(h=><th key={h} style={{background:'#6D28D9',color:'white',padding:'9px 8px',borderBottom:'none',whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
+        <tbody>{mData.map((m,i)=>{const has=m.totalRev>0||m.totalExp>0;return(<tr key={m.key} style={{opacity:has?1:.35}}>
+          <td style={{fontWeight:700}}>{MN[i]}</td>
+          <td style={{color:'#047857',fontWeight:has?600:400}}>{fmt(m.totalRev)}</td>
+          <td style={{color:'#DC2626'}}>{fmt(m.totalCost)}</td>
+          <td style={{color:'#6D28D9',fontWeight:700}}>{fmt(m.gross)}</td>
+          <td style={{color:'#DC2626'}}>{fmt(m.totalExp)}</td>
+          <td style={{fontWeight:800,color:m.net>=0?'#047857':'#DC2626'}}>{fmt(m.net)}</td>
+          {m.accs.map(ac=><td key={ac.id} style={{color:ac.share>=0?ac.color:'#DC2626',fontWeight:600}}>{fmt(ac.share)}</td>)}
+        </tr>);})}</tbody>
+        <tfoot><tr style={{background:'#1E293B',color:'white',fontWeight:800}}>
+          <td>الإجمالي</td><td style={{color:'#4ADE80'}}>{fmt(tot.totalRev)}</td><td style={{color:'#FCA5A5'}}>{fmt(tot.totalCost)}</td>
+          <td style={{color:'#C4B5FD'}}>{fmt(tot.gross)}</td><td style={{color:'#FCA5A5'}}>{fmt(tot.totalExp)}</td>
+          <td style={{color:tot.net>=0?'#4ADE80':'#FCA5A5',fontSize:14}}>{fmt(tot.net)}</td>
+          {aP.map(ac=><td key={ac.id} style={{color:ac.share>=0?'#86EFAC':'#FCA5A5'}}>{fmt(ac.share)}</td>)}
+        </tr></tfoot>
+      </table></div>
+    </div>
+  </div>);
+}
+
+/* ═══ CAMPAIGN ANALYTICS ══════════════════════════════ */
+function Campaigns({campaigns,onWrite}){
+  const empty={date:today(),platform:PLATFORMS[0],desc:'',budget:'',reach:'',clicks:'',orders:'',revenue:''};
+  const[form,setForm]=useState(empty);const[open,setOpen]=useState(false);
+  const s=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+  const submit=()=>{if(!form.budget||+form.budget<=0)return;const id=uid();onWrite(d=>d.campaigns[id]={...form,id,budget:+form.budget,reach:+form.reach||0,clicks:+form.clicks||0,orders:+form.orders||0,revenue:+form.revenue||0});setForm(empty);setOpen(false);notify('✅ تم حفظ الحملة');};
+  const list=[...campaigns].sort((a,b)=>b.date.localeCompare(a.date));
+  const totals=useMemo(()=>({budget:list.reduce((s,c)=>s+c.budget,0),revenue:list.reduce((s,c)=>s+c.revenue,0),orders:list.reduce((s,c)=>s+c.orders,0)}),[list]);
+  const bestCamp=useMemo(()=>list.reduce((best,c)=>{const roas=c.budget>0?c.revenue/c.budget:0;return roas>(best?best.revenue/best.budget:0)?c:best;},null),[list]);
+  const getMetrics=c=>({roas:c.budget>0?(c.revenue/c.budget).toFixed(1):null,roi:c.budget>0?((c.revenue-c.budget)/c.budget*100).toFixed(0):null,cpa:c.orders>0?(c.budget/c.orders).toFixed(1):null,cpm:c.reach>0?(c.budget/c.reach*1000).toFixed(2):null,cvr:c.clicks>0?(c.orders/c.clicks*100).toFixed(1):null});
+  const recommend=c=>{const r=c.budget>0?c.revenue/c.budget:0;if(r>=5)return{txt:'🚀 حملة ممتازة — ضاعف الميزانية',cls:'tag-green'};if(r>=3)return{txt:'✅ حملة جيدة — حسّن الإعلانات',cls:'tag-purple'};if(r>=1.5)return{txt:'⚠️ متوسطة — راجع الاستهداف',cls:'tag-purple'};return{txt:'❌ عائد منخفض — أوقف وراجع',cls:'tag-red'};};
+  const byPlatform=useMemo(()=>{const p={};list.forEach(c=>{if(!p[c.platform])p[c.platform]={budget:0,revenue:0,orders:0};p[c.platform].budget+=c.budget;p[c.platform].revenue+=c.revenue;p[c.platform].orders+=c.orders;});return p;},[list]);
+  return(<div>
+    <h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>📣 تحليل الحملات الإعلانية</h2>
+    <p style={{fontSize:13,color:'#94A3B8',marginBottom:14}}>قس أداء حملاتك واحصل على توصيات ذكية</p>
+    {totals.budget>0&&<div className="kgrid">
+      <KPI ico="💸" lbl="إجمالي الإنفاق" val={`${fmt(totals.budget)} ر.ي`} color="#DC2626" bg="#FEF2F2"/>
+      <KPI ico="💰" lbl="إيرادات الحملات" val={`${fmt(totals.revenue)} ر.ي`} color="#047857" bg="#ECFDF5"/>
+      <KPI ico="📊" lbl="ROAS الإجمالي" val={totals.budget>0?`${(totals.revenue/totals.budget).toFixed(1)}x`:'—'} color={totals.budget>0&&totals.revenue/totals.budget>=3?'#047857':'#DC2626'} bg={totals.budget>0&&totals.revenue/totals.budget>=3?'#ECFDF5':'#FEF2F2'} sub="عائد كل ريال أنفقته"/>
+      <KPI ico="🛒" lbl="إجمالي الطلبات" val={fmtN(totals.orders)} color="#6D28D9" bg="#F5F3FF" sub={totals.orders>0?`CPA: ${fmt(totals.budget/totals.orders)}`:null}/>
+    </div>}
+    {Object.keys(byPlatform).length>1&&<div className="card"><div style={{fontWeight:800,fontSize:14,marginBottom:12}}>🏆 مقارنة المنصات</div>
+      <div className="twrap"><table><thead><tr>{['المنصة','الإنفاق','الإيرادات','ROAS','الطلبات','CPA'].map(h=><th key={h}>{h}</th>)}</tr></thead>
+      <tbody>{Object.entries(byPlatform).sort((a,b)=>b[1].revenue/b[1].budget-a[1].revenue/a[1].budget).map(([pf,d])=>{const roas=d.budget>0?(d.revenue/d.budget).toFixed(1):0;const cpa=d.orders>0?(d.budget/d.orders).toFixed(0):'-';return(<tr key={pf}>
+        <td style={{fontWeight:700}}>{pf}</td>
+        <td style={{color:'#DC2626'}}>{fmt(d.budget)}</td>
+        <td style={{color:'#047857',fontWeight:700}}>{fmt(d.revenue)}</td>
+        <td><span className={roas>=3?'tag-green':'tag-red'}>{roas}x</span></td>
+        <td>{fmtN(d.orders)}</td>
+        <td style={{color:'#64748B'}}>{cpa}</td>
+      </tr>);})}</tbody>
+      </table></div>
+    </div>}
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,gap:8}}>
+      <span style={{fontWeight:700,fontSize:14}}>سجل الحملات ({list.length})</span>
+      <Btn onClick={()=>setOpen(!open)} style={{fontSize:13}}>{open?'✕ إغلاق':'➕ إضافة حملة'}</Btn>
+    </div>
+    {open&&<div className="card" style={{border:'2px solid #A78BFA',marginBottom:12}}>
+      <div style={{fontWeight:800,fontSize:14,color:'#6D28D9',marginBottom:12}}>📣 تسجيل حملة جديدة</div>
+      <div className="fgrid">
+        <Inp label="التاريخ" type="date" value={form.date} onChange={s('date')}/>
+        <Sel label="المنصة" value={form.platform} onChange={s('platform')}>{PLATFORMS.map(p=><option key={p}>{p}</option>)}</Sel>
+        <Inp label="وصف الحملة" value={form.desc} onChange={s('desc')} placeholder="اسم أو هدف الحملة"/>
+        <Inp label="الميزانية المنفقة ✶" req type="number" value={form.budget} onChange={s('budget')} placeholder="0"/>
+        <Inp label="الوصول (Reach)" type="number" value={form.reach} onChange={s('reach')} placeholder="0"/>
+        <Inp label="النقرات (Clicks)" type="number" value={form.clicks} onChange={s('clicks')} placeholder="0"/>
+        <Inp label="الطلبات (Orders)" type="number" value={form.orders} onChange={s('orders')} placeholder="0"/>
+        <Inp label="الإيرادات من الحملة" type="number" value={form.revenue} onChange={s('revenue')} placeholder="0"/>
+      </div>
+      {+form.budget>0&&+form.revenue>0&&(()=>{const roas=(+form.revenue/+form.budget).toFixed(1);const roi=((+form.revenue-+form.budget)/+form.budget*100).toFixed(0);return<div style={{background:'#F5F3FF',borderRadius:10,padding:'10px 14px',marginBottom:12,display:'flex',gap:14,flexWrap:'wrap',fontSize:13}}>
+        <span>ROAS: <strong style={{color:roas>=3?'#047857':'#DC2626'}}>{roas}x</strong></span>
+        <span>ROI: <strong style={{color:roi>=0?'#047857':'#DC2626'}}>{roi>0?'+':''}{roi}%</strong></span>
+        {+form.orders>0&&<span>CPA: <strong style={{color:'#6D28D9'}}>{fmt(+form.budget/+form.orders)}</strong></span>}
+      </div>})()}
+      <Btn onClick={submit}>💾 حفظ الحملة</Btn>
+    </div>}
+    <div className="card">{list.length===0?<div style={{textAlign:'center',padding:28,color:'#94A3B8'}}>لم تُسجّل حملات بعد</div>
+    :list.map(c=>{const m=getMetrics(c);const rec=recommend(c);return(<div key={c.id} style={{borderBottom:'1px solid #F1F5F9',padding:'12px 0'}}>
+      <div style={{display:'flex',justifyContent:'space-between',gap:8,flexWrap:'wrap'}}>
+        <div>
+          <div style={{fontWeight:700,fontSize:13}}><Badge color="#6D28D9" bg="#F5F3FF">{c.platform}</Badge> {c.desc||'حملة إعلانية'}</div>
+          <div style={{fontSize:11,color:'#94A3B8',margin:'3px 0'}}>{c.date}</div>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:5}}>
+            {m.roas&&<span className={m.roas>=3?'tag-green':'tag-red'}>ROAS: {m.roas}x</span>}
+            {m.roi&&<span className={+m.roi>=0?'tag-green':'tag-red'}>ROI: {m.roi}%</span>}
+            {m.cpa&&<span className="tag-purple">CPA: {m.cpa}</span>}
+            {m.cvr&&<span style={{background:'#FFF7ED',color:'#92400E',border:'1px solid #FED7AA',borderRadius:8,padding:'3px 10px',fontSize:11,fontWeight:700}}>CVR: {m.cvr}%</span>}
+          </div>
+          <div style={{marginTop:6,fontSize:12}}><span className={rec.cls}>{rec.txt}</span></div>
+        </div>
+        <div style={{textAlign:'left'}}>
+          <div style={{fontWeight:900,color:'#047857',fontSize:15}}>{fmt(c.revenue)} ر.ي</div>
+          <div style={{fontSize:11,color:'#DC2626'}}>إنفاق: {fmt(c.budget)}</div>
+          <Btn v="d" style={{padding:'3px 10px',fontSize:12,marginTop:6}} onClick={()=>{if(window.confirm('حذف؟')){onWrite(d=>delete d.campaigns[c.id]);notify('🗑️ تم الحذف');}}}>🗑️</Btn>
+        </div>
+      </div>
+    </div>);})}
+    </div>
+    <div className="card" style={{background:'linear-gradient(135deg,#F5F3FF,#EDE9FE)',border:'1px solid #C4B5FD'}}>
+      <div style={{fontWeight:800,fontSize:14,color:'#6D28D9',marginBottom:10}}>💡 توصيات التسويق الذكية</div>
+      {totals.budget===0?<p style={{fontSize:13,color:'#64748B'}}>سجّل حملاتك أولاً لأحلل أداءك وأقدم توصيات مخصصة.</p>
+      :<div style={{fontSize:13,color:'#4C1D95',lineHeight:2}}>
+        {totals.revenue/totals.budget>=4&&<div>🚀 أداؤك التسويقي ممتاز! ROAS {(totals.revenue/totals.budget).toFixed(1)}x — ابدأ بزيادة الميزانية 20-30%</div>}
+        {totals.revenue/totals.budget>=2&&totals.revenue/totals.budget<4&&<div>📈 ROAS {(totals.revenue/totals.budget).toFixed(1)}x — جيد. اختبر محتوى جديد وحسّن صفحات المنتج</div>}
+        {totals.revenue/totals.budget<2&&<div>⚠️ ROAS {(totals.revenue/totals.budget).toFixed(1)}x — منخفض. راجع الاستهداف والإعلانات</div>}
+        {totals.budget>0&&<div>💰 ميزانية التسويق المقترحة للشهر القادم: {fmt(totals.budget*1.15)} ر.ي (+15%)</div>}
+        {bestCamp&&<div>🏆 أفضل حملة: {bestCamp.platform} — {bestCamp.desc||''} بعائد {bestCamp.budget>0?(bestCamp.revenue/bestCamp.budget).toFixed(1):'?'}x</div>}
+        <div>📊 ابدأ بتنويع المنصات وقيس كل منصة بشكل مستقل لتعرف أين تضع ميزانيتك</div>
+      </div>}
+    </div>
+  </div>);
+}
+
+/* ═══ SETTINGS ════════════════════════════════════════ */
+function Settings({onLogout,onWrite,products,sales,expenses,withdrawals,capital,campaigns,cfg,onExcel}){
+  const[p,setP]=useState({ahmed:'',mansour:'',aq:''});const[ok,setOk]=useState(false);
+  const savePwd=()=>{if(!p.ahmed&&!p.mansour&&!p.aq)return;onWrite(d=>{if(p.ahmed)d.config.pwd_ahmed=p.ahmed;if(p.mansour)d.config.pwd_mansour=p.mansour;if(p.aq)d.config.pwd_aq=p.aq;});setOk(true);setP({ahmed:'',mansour:'',aq:''});setTimeout(()=>setOk(false),3000);notify('✅ تم تغيير كلمات المرور');};
+  const resetTok=()=>{if(window.confirm('إعادة إدخال رمز الاتصال؟')){localStorage.removeItem(TOKEN_KEY);sessionStorage.removeItem('iam_u');window.location.reload();}};
+  return(<div>
+    <h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>⚙️ الإعدادات</h2><p style={{fontSize:13,color:'#94A3B8',marginBottom:14}}>IAM Brand — إدارة النظام</p>
+    <div className="card" style={{background:'linear-gradient(135deg,#F0FDF4,#ECFDF5)',border:'2px solid #A7F3D0'}}>
+      <div style={{fontWeight:800,fontSize:15,color:'#047857',marginBottom:8}}>📥 تصدير Excel الشامل</div>
+      <p style={{fontSize:13,color:'#065F46',marginBottom:14,lineHeight:1.7}}>ملف Excel متكامل بـ 8 ورقات: منتجات · مبيعات · مصاريف · رأس المال · سحوبات · حملات · ملخص الصناديق · أرباح شهرية</p>
+      <button className="btn bxl" onClick={onExcel} style={{padding:'12px 24px',fontSize:14}}>📊 تصدير Excel الآن</button>
+    </div>
+    <div className="card">
+      <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>🔐 تغيير كلمات المرور</div>
+      <div className="fgrid">
+        <Inp label="كلمة مرور أحمد الجديدة" type="password" value={p.ahmed} onChange={e=>setP(x=>({...x,ahmed:e.target.value}))} placeholder="اتركه فارغاً للإبقاء"/>
+        <Inp label="كلمة مرور منصور الجديدة" type="password" value={p.mansour} onChange={e=>setP(x=>({...x,mansour:e.target.value}))} placeholder="اتركه فارغاً للإبقاء"/>
+        <Inp label="كلمة مرور عبدالقادر الجديدة" type="password" value={p.aq} onChange={e=>setP(x=>({...x,aq:e.target.value}))} placeholder="اتركه فارغاً للإبقاء"/>
+      </div>
+      <Btn onClick={savePwd}>{ok?'✅ تم على جميع الأجهزة':'💾 حفظ كلمات المرور'}</Btn>
+    </div>
+    <div className="card">
+      <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>👥 الصلاحيات</div>
+      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        <div style={{background:'#F5F3FF',borderRadius:10,padding:'12px 14px',border:'1px solid #C4B5FD'}}><div style={{fontWeight:800,color:'#6D28D9',fontSize:14,marginBottom:4}}>👑 أحمد — المالك (92.5%)</div><div style={{fontSize:12,color:'#7C3AED'}}>✅ كل شيء: إدارة كاملة · جميع التقارير · Excel · كلمات مرور</div></div>
+        <div style={{background:'#ECFDF5',borderRadius:10,padding:'12px 14px',border:'1px solid #A7F3D0'}}><div style={{fontWeight:800,color:'#047857',fontSize:14,marginBottom:4}}>🤝 منصور — شريك (5%)</div><div style={{fontSize:12,color:'#059669',marginBottom:3}}>✅ إضافة منتجات · إصدار فواتير</div><div style={{fontSize:12,color:'#DC2626'}}>🚫 لا يرى أسعار الشراء أو التكاليف أو التقارير المالية</div></div>
+        <div style={{background:'#FEF2F2',borderRadius:10,padding:'12px 14px',border:'1px solid #FECACA'}}><div style={{fontWeight:800,color:'#DC2626',fontSize:14,marginBottom:4}}>📊 عبدالقادر — عمولة (2.5%)</div><div style={{fontSize:12,color:'#EF4444'}}>✅ إضافة مصاريف فقط · لا يرى أي أرقام مالية أخرى</div></div>
+      </div>
+    </div>
+    <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+      <Btn v="d" onClick={onLogout} style={{padding:'10px 18px',fontSize:14}}>🚪 تسجيل الخروج</Btn>
+      <Btn v="g" onClick={resetTok} style={{padding:'10px 18px',fontSize:13}}>🔑 تغيير رمز الاتصال</Btn>
+    </div>
+  </div>);
+}
+
+/* ═══ MAIN APP ════════════════════════════════════════ */
+function App(){
+  const[user,setUser]=useState(()=>{try{const u=sessionStorage.getItem('iam_u');return u?JSON.parse(u):null;}catch{return null;}});
+  const[tab,setTab]=useState(0);
+  const[products,setProducts]=useState([]);const[sales,setSales]=useState([]);
+  const[expenses,setExpenses]=useState([]);const[withdrawals,setWithdrawals]=useState([]);
+  const[capital,setCapital]=useState([]);const[campaigns,setCampaigns]=useState([]);
+  const[cfg,setCfg]=useState({pwd_ahmed:'1234',pwd_mansour:'5678',pwd_aq:'9012'});
+  const[syncState,setSyncState]=useState('loading');const[lastTs,setLastTs]=useState(0);
+  const[moreOpen,setMoreOpen]=useState(false);const[hasToken,setHasToken]=useState(!!getToken());
+
+  const applyData=d=>{
+    setProducts(Object.values(d.products||{}));setSales(Object.values(d.sales||{}));
+    setExpenses(Object.values(d.expenses||{}));setWithdrawals(Object.values(d.withdrawals||{}));
+    setCapital(Object.values(d.capital||{}));setCampaigns(Object.values(d.campaigns||{}));
+    setCfg(d.config||{pwd_ahmed:'1234',pwd_mansour:'5678',pwd_aq:'9012'});
+    setLastTs(d.ts||0);
+  };
+
+  useEffect(()=>{
+    if(!getToken()){setSyncState('notoken');return;}
+    ghRead().then(d=>{applyData(d);setSyncState('ok');}).catch(()=>setSyncState('err'));
+    const poll=setInterval(()=>{ghRead().then(d=>{if((d.ts||0)>lastTs){applyData(d);notify('🔄 تم التحديث');}setSyncState('ok');}).catch(()=>setSyncState('err'));},30000);
+    return()=>clearInterval(poll);
+  },[hasToken]);
+
+  const onWrite=useCallback(updater=>{
+    setSyncState('busy');
+    ghWrite(updater).then(d=>{applyData(d);setSyncState('ok');}).catch(()=>{setSyncState('err');notify('❌ خطأ في الحفظ');});
+  },[lastTs]);
+
+  const handleLogin=u=>{setUser(u);sessionStorage.setItem('iam_u',JSON.stringify(u));setTab(u.role==='admin'?0:u.role==='mansour'?1:3);};
+  const handleLogout=()=>{sessionStorage.removeItem('iam_u');setUser(null);};
+  const onExcel=()=>exportExcel(products,sales,expenses,withdrawals,capital,campaigns);
+
+  const accsData=useMemo(()=>{
+    const fin=calcFin(sales,expenses,withdrawals);
+    return ACCOUNTS.map(ac=>{
+      const pd=fin.accs.find(x=>x.id===ac.id);
+      const capTotal=capital.filter(c=>c.pid===ac.id).reduce((a,x)=>a+(x.amount||0),0);
+      const share=pd?.share||0;const drawn=pd?.drawn||0;
+      return{...ac,share,drawn,capTotal,netBalance:capTotal+share-drawn};
+    });
+  },[sales,expenses,withdrawals,capital]);
+
+  if(syncState==='notoken'||!hasToken)return<SetupScreen onDone={()=>{setHasToken(true);setSyncState('loading');}}/>;
+  if(syncState==='loading')return<div className="splash"><div className="splash-logo">✨</div><div style={{color:'white',fontSize:16,fontWeight:800}}>جاري تحميل IAM Brand...</div></div>;
+  if(!user)return<LoginScreen onLogin={handleLogin} cfg={cfg}/>;
+
+  const TABS=user.role==='admin'?ADMIN_TABS:user.role==='mansour'?MANSOUR_TABS:AQ_TABS;
+  const isAdmin=user.role==='admin';
+  const bottomTabs=TABS.slice(0,5);const moreTabs=TABS.slice(5);
+  const goTab=id=>{setTab(id);setMoreOpen(false);};
+  const syncLabel={ok:'متزامن ☁️',busy:'جاري الحفظ...',err:'خطأ في الاتصال'};
+
+  const renderContent=()=>{
+    switch(tab){
+      case 0:return isAdmin?<Dashboard sales={sales} expenses={expenses} withdrawals={withdrawals} capital={capital} accsData={accsData} onExcel={onExcel}/>:null;
+      case 1:return<Products products={products} onWrite={onWrite}/>;
+      case 2:return<Sales sales={sales} products={products} onWrite={onWrite}/>;
+      case 3:return<Expenses expenses={expenses} onWrite={onWrite}/>;
+      case 4:return isAdmin?<CostCalc/>:null;
+      case 5:return isAdmin?<Safes withdrawals={withdrawals} accsData={accsData} onWrite={onWrite}/>:null;
+      case 6:return isAdmin?<Capital capital={capital} accsData={accsData} onWrite={onWrite}/>:null;
+      case 7:return isAdmin?<MonthlyReport sales={sales} expenses={expenses} withdrawals={withdrawals}/>:null;
+      case 8:return isAdmin?<PL sales={sales} expenses={expenses} withdrawals={withdrawals} capital={capital}/>:null;
+      case 9:return isAdmin?<Campaigns campaigns={campaigns} onWrite={onWrite}/>:null;
+      case 10:return isAdmin?<Settings onLogout={handleLogout} onWrite={onWrite} products={products} sales={sales} expenses={expenses} withdrawals={withdrawals} capital={capital} campaigns={campaigns} cfg={cfg} onExcel={onExcel}/>:null;
+      default:return null;
+    }
+  };
+
+  return(<AuthCtx.Provider value={{user}}>
+    <header className="app-header"><div className="hinner">
+      <div className="hrow">
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <span style={{fontSize:20}}>✨</span>
+          <div>
+            <div style={{fontWeight:900,fontSize:15,lineHeight:1.2}}>IAM Brand</div>
+            <div style={{fontSize:11,opacity:.85,display:'flex',alignItems:'center',gap:4}}>
+              {user.name} <span className={`sync-dot ${syncState}`}></span><span style={{fontSize:10}}>{syncLabel[syncState]||''}</span>
+            </div>
+          </div>
+        </div>
+        <button onClick={handleLogout} style={{background:'rgba(255,255,255,.18)',border:'none',color:'white',padding:'6px 12px',borderRadius:8,cursor:'pointer',fontFamily:"'Cairo',sans-serif",fontSize:12}}>خروج</button>
+      </div>
+      <div className="dtabs">{TABS.map(t=><button key={t.id} className={`dtab ${tab===t.id?'act':''}`} onClick={()=>setTab(t.id)}>{t.ico} {t.lbl}</button>)}</div>
+    </div></header>
+    <div className="content">{renderContent()}</div>
+    {isAdmin&&<button className="fab-xl" onClick={onExcel}>📊 Excel</button>}
+    {moreTabs.length>0&&<><div className={`mov ${moreOpen?'open':''}`} onClick={()=>setMoreOpen(false)}/><div className={`mmenu ${moreOpen?'open':''}`}>{moreTabs.map(t=><button key={t.id} className={`mmi ${tab===t.id?'act':''}`} onClick={()=>goTab(t.id)}><span>{t.ico}</span>{t.lbl}</button>)}</div></>}
+    <nav className="bnav">
+      {bottomTabs.map(t=><button key={t.id} className={`bni ${tab===t.id?'act':''}`} onClick={()=>setTab(t.id)}><span className="ico">{t.ico}</span>{t.lbl}</button>)}
+      {moreTabs.length>0&&<button className={`bni ${moreTabs.some(t=>t.id===tab)||moreOpen?'act':''}`} onClick={()=>setMoreOpen(v=>!v)}><span className="ico">⋯</span>المزيد</button>}
+    </nav>
+  </AuthCtx.Provider>);
+}
+
+ReactDOM.createRoot(document.getElementById('app')).render(<App/>);
+</script>
+<script>
+const mf={name:'IAM Brand',short_name:'IAM',start_url:'.',display:'standalone',background_color:'#6D28D9',theme_color:'#6D28D9',lang:'ar',dir:'rtl',icons:[{src:`data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="#6D28D9"/><text y="75" x="50" text-anchor="middle" font-size="62">✨</text></svg>')}`,sizes:'any',type:'image/svg+xml'}]};
+const mb=new Blob([JSON.stringify(mf)],{type:'application/json'});const ml=document.createElement('link');ml.rel='manifest';ml.href=URL.createObjectURL(mb);document.head.appendChild(ml);
+if('serviceWorker' in navigator){const sw=`const C='iam-v1';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.add('/'))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});}
+</script>
+</body>
+</html>

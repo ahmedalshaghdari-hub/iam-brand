@@ -77,7 +77,7 @@ async function ghRead(){
   if(!r.ok)throw new Error('read '+r.status);
   const f=await r.json();_sha=f.sha;
   _cache=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\s/g,'')))));
-  ['products','sales','expenses','capital','withdrawals','campaigns'].forEach(k=>{if(!_cache[k])_cache[k]={};});
+  ['products','sales','expenses','capital','withdrawals','campaigns','purchases'].forEach(k=>{if(!_cache[k])_cache[k]={};});
   return _cache;
 }
 async function ghWrite(updater){return new Promise((res,rej)=>{_queue.push({updater,res,rej});processQ();});}
@@ -86,7 +86,7 @@ async function processQ(){
   const{updater,res,rej}=_queue.shift();
   try{
     const data=_cache?JSON.parse(JSON.stringify(_cache)):await ghRead();
-    ['products','sales','expenses','capital','withdrawals','campaigns'].forEach(k=>{if(!data[k])data[k]={};});
+    ['products','sales','expenses','capital','withdrawals','campaigns','purchases'].forEach(k=>{if(!data[k])data[k]={};});
     updater(data);data.ts=Date.now();
     const content=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
     const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_DB_REPO}/contents/data.json`,{
@@ -112,6 +112,7 @@ const ADMIN_TABS=[
   {id:4,ico:'🧮',lbl:'الحاسبة'},{id:5,ico:'🏦',lbl:'الصناديق'},
   {id:6,ico:'💼',lbl:'رأس المال'},{id:7,ico:'📅',lbl:'التقارير'},
   {id:8,ico:'📈',lbl:'الأرباح'},{id:9,ico:'📣',lbl:'الحملات'},
+  {id:11,ico:'🛒',lbl:'فواتير الشراء'},
   {id:10,ico:'⚙️',lbl:'الإعدادات'},
 ];
 const MANSOUR_TABS=[{id:1,ico:'📦',lbl:'المنتجات'},{id:2,ico:'💰',lbl:'المبيعات'}];
@@ -830,6 +831,178 @@ function Campaigns({campaigns,onWrite}){
   </div>);
 }
 
+/* ═══ PURCHASE INVOICES ═══════════════════════════════ */
+function PurchaseInvoices({purchases,products,onWrite}){
+  const empty={invoiceNo:'',supplier:'',date:today(),shipping:'',otherCosts:'',distMethod:'value',items:[]};
+  const[form,setForm]=useState(empty);const[open,setOpen]=useState(false);const[viewId,setViewId]=useState(null);
+  const[iItem,setIItem]=useState({pid:'',qty:'',unitPrice:''});
+  const s=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
+
+  const calcLanded=(items,shipping,otherCosts,method)=>{
+    const totalExtra=(+shipping||0)+(+otherCosts||0);
+    const totalVal=items.reduce((s,it)=>s+(+it.qty*(+it.unitPrice)||0),0);
+    const totalQty=items.reduce((s,it)=>s+(+it.qty||0),0);
+    return items.map(it=>{
+      const itVal=(+it.qty||0)*(+it.unitPrice||0);
+      const share=method==='value'?(totalVal>0?itVal/totalVal*totalExtra:0):(totalQty>0?(+it.qty/totalQty)*totalExtra:0);
+      const perUnit=(+it.qty||0)>0?share/+it.qty:0;
+      const landed=(+it.unitPrice||0)+perUnit;
+      const pr=products.find(p=>p.id===it.pid);
+      const margin=landed>0&&pr?.sellP>0?((pr.sellP-landed)/landed*100).toFixed(1):null;
+      return{...it,share:+share.toFixed(2),perUnit:+perUnit.toFixed(2),landed:+landed.toFixed(2),itemLanded:+(+it.qty*landed).toFixed(2),margin};
+    });
+  };
+
+  const addItem=()=>{
+    if(!iItem.pid||!iItem.qty||!iItem.unitPrice)return;
+    const pr=products.find(p=>p.id===iItem.pid);
+    setForm(f=>({...f,items:[...f.items,{pid:iItem.pid,pname:pr?.name||'',qty:+iItem.qty,unitPrice:+iItem.unitPrice}]}));
+    setIItem({pid:'',qty:'',unitPrice:''});
+  };
+
+  const submit=()=>{
+    if(!form.items.length||!form.supplier)return;
+    const id=uid();
+    const landedItems=calcLanded(form.items,form.shipping,form.otherCosts,form.distMethod);
+    const totalGoods=form.items.reduce((s,it)=>s+(+it.qty*(+it.unitPrice)||0),0);
+    const totalLanded=landedItems.reduce((s,it)=>s+it.itemLanded,0);
+    onWrite(d=>d.purchases[id]={...form,id,shipping:+form.shipping||0,otherCosts:+form.otherCosts||0,totalGoods,totalLanded,landedItems});
+    setForm(empty);setOpen(false);notify('✅ تم حفظ فاتورة الشراء');
+  };
+
+  const list=[...purchases].sort((a,b)=>b.date.localeCompare(a.date));
+  const preview=useMemo(()=>form.items.length>0?calcLanded(form.items,form.shipping,form.otherCosts,form.distMethod):[],[form.items,form.shipping,form.otherCosts,form.distMethod]);
+  const totalGoods=form.items.reduce((s,it)=>s+(+it.qty*(+it.unitPrice)||0),0);
+  const totalExtra=(+form.shipping||0)+(+form.otherCosts||0);
+
+  return(<div>
+    <h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>🛒 فواتير الشراء</h2>
+    <p style={{fontSize:13,color:'#94A3B8',marginBottom:14}}>تتبع مشترياتك مع توزيع تكاليف الشحن تلقائياً</p>
+
+    <div className="card" style={{background:'#F0FDF4',border:'1px solid #A7F3D0',marginBottom:14}}>
+      <div style={{fontWeight:700,fontSize:13,color:'#047857',marginBottom:8}}>💡 كيف يعمل النظام؟</div>
+      <div style={{fontSize:12,color:'#065F46',lineHeight:1.9}}>
+        ① أضف الفاتورة بكل المنتجات وأسعار الشراء<br/>
+        ② أضف تكلفة الشحن الإجمالية (من المورد إلى مخزنك)<br/>
+        ③ النظام يوزّع الشحن على كل منتج تلقائياً بحسب قيمته<br/>
+        ④ تحصل على التكلفة الحقيقية لكل وحدة مع الشحن
+      </div>
+    </div>
+
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+      <span style={{fontWeight:700,fontSize:14}}>الفواتير ({list.length})</span>
+      <Btn onClick={()=>setOpen(!open)}>{open?'✕ إغلاق':'➕ فاتورة شراء جديدة'}</Btn>
+    </div>
+
+    {open&&<div className="card" style={{border:'2px solid #A78BFA',marginBottom:14}}>
+      <div style={{fontWeight:800,fontSize:14,color:'#6D28D9',marginBottom:14}}>🛒 فاتورة شراء جديدة</div>
+
+      <div className="fgrid" style={{marginBottom:14}}>
+        <Inp label="رقم الفاتورة" value={form.invoiceNo} onChange={s('invoiceNo')} placeholder="INV-001"/>
+        <Inp label="اسم المورد ✶" req value={form.supplier} onChange={s('supplier')} placeholder="اسم الشركة/المورد"/>
+        <Inp label="التاريخ" type="date" value={form.date} onChange={s('date')}/>
+        <Inp label="تكلفة الشحن الإجمالية" type="number" value={form.shipping} onChange={s('shipping')} placeholder="0 — شحن من المورد"/>
+        <Inp label="تكاليف أخرى (جمارك، تخليص)" type="number" value={form.otherCosts} onChange={s('otherCosts')} placeholder="0"/>
+        <div className="fg">
+          <label>طريقة توزيع الشحن</label>
+          <select className="fc" value={form.distMethod} onChange={s('distMethod')}>
+            <option value="value">📊 بحسب قيمة المنتج (الأدق)</option>
+            <option value="qty">🔢 بحسب الكمية (بالتساوي)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style={{fontWeight:700,fontSize:13,color:'#475569',marginBottom:8}}>📦 أضف المنتجات:</div>
+      <div style={{display:'grid',gridTemplateColumns:'2fr 80px 100px auto',gap:8,marginBottom:10,alignItems:'end'}}>
+        <Sel value={iItem.pid} onChange={e=>setIItem(p=>({...p,pid:e.target.value}))}>
+          <option value="">-- اختر منتج --</option>
+          {products.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+        </Sel>
+        <Inp type="number" value={iItem.qty} onChange={e=>setIItem(p=>({...p,qty:e.target.value}))} placeholder="كمية"/>
+        <Inp type="number" value={iItem.unitPrice} onChange={e=>setIItem(p=>({...p,unitPrice:e.target.value}))} placeholder="سعر الشراء"/>
+        <Btn v="s" style={{padding:'9px 14px'}} onClick={addItem}>＋ أضف</Btn>
+      </div>
+
+      {form.items.length>0&&<>
+        <div style={{background:'#F8FAFC',borderRadius:10,border:'1px solid #EDE9FE',marginBottom:14}}>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+            <thead><tr style={{background:'#6D28D9',color:'white'}}>
+              {['المنتج','الكمية','سعر الشراء','إجمالي','شحن/وحدة','التكلفة الحقيقية/وحدة','هامش%',''].map(h=><th key={h} style={{padding:'8px 10px',textAlign:'right',fontWeight:700,background:'#6D28D9',color:'white',whiteSpace:'nowrap'}}>{h}</th>)}
+            </tr></thead>
+            <tbody>{preview.map((it,i)=>(
+              <tr key={i} style={{background:i%2===0?'white':'#FAFAFA'}}>
+                <td style={{padding:'8px 10px',fontWeight:700}}>{it.pname}</td>
+                <td style={{padding:'8px 10px',textAlign:'center'}}>{it.qty}</td>
+                <td style={{padding:'8px 10px',color:'#64748B'}}>{fmt(it.unitPrice)}</td>
+                <td style={{padding:'8px 10px',color:'#64748B'}}>{fmt(+it.qty*(+it.unitPrice))}</td>
+                <td style={{padding:'8px 10px',color:'#DC2626'}}>{fmt(it.perUnit)}</td>
+                <td style={{padding:'8px 10px',fontWeight:800,color:'#6D28D9'}}>{fmt(it.landed)}</td>
+                <td style={{padding:'8px 10px'}}>{it.margin?<span className={+it.margin>=30?'tag-green':'tag-red'}>{it.margin}%</span>:'—'}</td>
+                <td style={{padding:'8px 10px'}}><Btn v="d" style={{padding:'3px 8px',fontSize:11}} onClick={()=>setForm(f=>({...f,items:f.items.filter((_,idx)=>idx!==i)}))}>✕</Btn></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:14}}>
+          <span className="tag-purple">البضاعة: {fmt(totalGoods)}</span>
+          {totalExtra>0&&<span className="tag-red">شحن+أخرى: {fmt(totalExtra)}</span>}
+          <span className="tag-green">الإجمالي المرحّل: {fmt(totalGoods+totalExtra)}</span>
+        </div>
+        <Btn v="s" onClick={submit}>💾 حفظ الفاتورة</Btn>
+      </>}
+    </div>}
+
+    {list.length===0?<div className="card" style={{textAlign:'center',padding:36,color:'#94A3B8'}}>لم تُسجّل فواتير شراء بعد</div>
+    :list.map(inv=>(
+      <div key={inv.id} className="card" style={{border:'1px solid #EDE9FE'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8,flexWrap:'wrap'}}>
+          <div>
+            <div style={{fontWeight:800,fontSize:14}}>🧾 {inv.supplier} {inv.invoiceNo&&<span style={{color:'#94A3B8',fontSize:12}}>#{inv.invoiceNo}</span>}</div>
+            <div style={{fontSize:12,color:'#94A3B8',margin:'3px 0'}}>{inv.date} · {inv.items?.length||0} منتج · توزيع {inv.distMethod==='value'?'بالقيمة':'بالكمية'}</div>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:6}}>
+              <span className="tag-purple">البضاعة: {fmt(inv.totalGoods)}</span>
+              {inv.shipping>0&&<span className="tag-red">شحن: {fmt(inv.shipping)}</span>}
+              {inv.otherCosts>0&&<span className="tag-red">أخرى: {fmt(inv.otherCosts)}</span>}
+              <span className="tag-green">الكلي: {fmt(inv.totalLanded)}</span>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:6}}>
+            <Btn v="g" style={{padding:'5px 12px',fontSize:12}} onClick={()=>setViewId(viewId===inv.id?null:inv.id)}>
+              {viewId===inv.id?'إخفاء':'📊 التفصيل'}
+            </Btn>
+            <Btn v="d" style={{padding:'5px 10px',fontSize:12}} onClick={()=>{if(window.confirm('حذف الفاتورة؟')){onWrite(d=>delete d.purchases[inv.id]);notify('🗑️ تم الحذف');}}}>🗑️</Btn>
+          </div>
+        </div>
+        {viewId===inv.id&&inv.landedItems&&<div style={{marginTop:12,borderTop:'1px solid #F1F5F9',paddingTop:12}}>
+          <div style={{fontWeight:700,fontSize:13,color:'#6D28D9',marginBottom:8}}>📦 تفصيل تكاليف الشراء:</div>
+          <div className="twrap"><table>
+            <thead><tr>{['المنتج','الكمية','سعر الشراء','قيمة الشحن المخصص','شحن/وحدة','التكلفة الحقيقية/وحدة','سعر البيع','الهامش'].map(h=><th key={h}>{h}</th>)}</tr></thead>
+            <tbody>{inv.landedItems.map((it,i)=>{const pr=products.find(p=>p.id===it.pid);return(<tr key={i}>
+              <td style={{fontWeight:700}}>{it.pname}</td>
+              <td style={{textAlign:'center'}}>{it.qty}</td>
+              <td style={{color:'#64748B'}}>{fmt(it.unitPrice)}</td>
+              <td style={{color:'#DC2626'}}>{fmt(it.share)}</td>
+              <td style={{color:'#DC2626',fontWeight:600}}>{fmt(it.perUnit)}</td>
+              <td style={{color:'#6D28D9',fontWeight:800,fontSize:14}}>{fmt(it.landed)}</td>
+              <td style={{color:'#047857',fontWeight:700}}>{pr?.sellP?fmt(pr.sellP):'—'}</td>
+              <td>{it.margin?<span className={+it.margin>=30?'tag-green':+it.margin>=0?'tag-purple':'tag-red'}>{it.margin}%</span>:'—'}</td>
+            </tr>);})}
+            </tbody>
+          </table></div>
+          <div style={{marginTop:12,background:'#FFFBEB',borderRadius:10,padding:'10px 14px',border:'1px solid #FDE68A'}}>
+            <div style={{fontWeight:700,fontSize:12,color:'#92400E',marginBottom:6}}>💡 ماذا تعني هذه الأرقام؟</div>
+            <div style={{fontSize:12,color:'#78350F',lineHeight:1.9}}>
+              {inv.landedItems.some(it=>it.margin!==null&&+it.margin<20)&&<div>⚠️ بعض المنتجات هامشها أقل من 20% — فكّر في رفع سعر البيع</div>}
+              {inv.landedItems.some(it=>it.margin!==null&&+it.margin>=50)&&<div>✅ بعض المنتجات هامشها ممتاز (+50%)</div>}
+              <div>📊 إجمالي البضاعة: {fmt(inv.totalGoods)} · الشحن والتكاليف: {fmt((inv.shipping||0)+(inv.otherCosts||0))} · نسبة الشحن: {inv.totalGoods>0?(((inv.shipping||0)+(inv.otherCosts||0))/inv.totalGoods*100).toFixed(1):0}% من قيمة البضاعة</div>
+            </div>
+          </div>
+        </div>}
+      </div>
+    ))}
+  </div>);
+}
+
 /* ═══ SETTINGS ════════════════════════════════════════ */
 function Settings({onLogout,onWrite,products,sales,expenses,withdrawals,capital,campaigns,cfg,onExcel}){
   const[p,setP]=useState({ahmed:'',mansour:'',aq:''});const[ok,setOk]=useState(false);
@@ -872,7 +1045,7 @@ function App(){
   const[tab,setTab]=useState(0);
   const[products,setProducts]=useState([]);const[sales,setSales]=useState([]);
   const[expenses,setExpenses]=useState([]);const[withdrawals,setWithdrawals]=useState([]);
-  const[capital,setCapital]=useState([]);const[campaigns,setCampaigns]=useState([]);
+  const[capital,setCapital]=useState([]);const[campaigns,setCampaigns]=useState([]);const[purchases,setPurchases]=useState([]);
   const[cfg,setCfg]=useState({pwd_ahmed:'1234',pwd_mansour:'5678',pwd_aq:'9012'});
   const[syncState,setSyncState]=useState('loading');const[lastTs,setLastTs]=useState(0);
   const[moreOpen,setMoreOpen]=useState(false);const[hasToken,setHasToken]=useState(!!getToken());
@@ -880,7 +1053,7 @@ function App(){
   const applyData=d=>{
     setProducts(Object.values(d.products||{}));setSales(Object.values(d.sales||{}));
     setExpenses(Object.values(d.expenses||{}));setWithdrawals(Object.values(d.withdrawals||{}));
-    setCapital(Object.values(d.capital||{}));setCampaigns(Object.values(d.campaigns||{}));
+    setCapital(Object.values(d.capital||{}));setCampaigns(Object.values(d.campaigns||{}));setPurchases(Object.values(d.purchases||{}));
     setCfg(d.config||{pwd_ahmed:'1234',pwd_mansour:'5678',pwd_aq:'9012'});
     setLastTs(d.ts||0);
   };
@@ -933,6 +1106,7 @@ function App(){
       case 7:return isAdmin?<MonthlyReport sales={sales} expenses={expenses} withdrawals={withdrawals}/>:null;
       case 8:return isAdmin?<PL sales={sales} expenses={expenses} withdrawals={withdrawals} capital={capital}/>:null;
       case 9:return isAdmin?<Campaigns campaigns={campaigns} onWrite={onWrite}/>:null;
+      case 11:return isAdmin?<PurchaseInvoices purchases={purchases} products={products} onWrite={onWrite}/>:null;
       case 10:return isAdmin?<Settings onLogout={handleLogout} onWrite={onWrite} products={products} sales={sales} expenses={expenses} withdrawals={withdrawals} capital={capital} campaigns={campaigns} cfg={cfg} onExcel={onExcel}/>:null;
       default:return null;
     }

@@ -77,7 +77,7 @@ async function ghRead(){
   if(!r.ok)throw new Error('read '+r.status);
   const f=await r.json();_sha=f.sha;
   _cache=JSON.parse(decodeURIComponent(escape(atob(f.content.replace(/\s/g,'')))));
-  ['products','sales','expenses','capital','withdrawals','campaigns','purchases'].forEach(k=>{if(!_cache[k])_cache[k]={};});
+  ['products','sales','expenses','capital','withdrawals','campaigns','purchases','returns'].forEach(k=>{if(!_cache[k])_cache[k]={};});
   return _cache;
 }
 async function ghWrite(updater){return new Promise((res,rej)=>{_queue.push({updater,res,rej});processQ();});}
@@ -86,7 +86,7 @@ async function processQ(){
   const{updater,res,rej}=_queue.shift();
   try{
     const data=_cache?JSON.parse(JSON.stringify(_cache)):await ghRead();
-    ['products','sales','expenses','capital','withdrawals','campaigns','purchases'].forEach(k=>{if(!data[k])data[k]={};});
+    ['products','sales','expenses','capital','withdrawals','campaigns','purchases','returns'].forEach(k=>{if(!data[k])data[k]={};});
     updater(data);data.ts=Date.now();
     const content=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
     const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_DB_REPO}/contents/data.json`,{
@@ -112,7 +112,7 @@ const ADMIN_TABS=[
   {id:4,ico:'🧮',lbl:'الحاسبة'},{id:5,ico:'🏦',lbl:'الصناديق'},
   {id:6,ico:'💼',lbl:'رأس المال'},{id:7,ico:'📅',lbl:'التقارير'},
   {id:8,ico:'📈',lbl:'الأرباح'},{id:9,ico:'📣',lbl:'الحملات'},
-  {id:11,ico:'🛒',lbl:'فواتير الشراء'},
+  {id:11,ico:'🛒',lbl:'فواتير الشراء'},{id:12,ico:'↩️',lbl:'المرتجعات'},
   {id:10,ico:'⚙️',lbl:'الإعدادات'},
 ];
 const MANSOUR_TABS=[{id:1,ico:'📦',lbl:'المنتجات'},{id:2,ico:'💰',lbl:'المبيعات'}];
@@ -153,7 +153,7 @@ const calcFin=(sales,expenses,withdrawals,mFilter=null)=>{
 };
 
 /* ═══ EXCEL EXPORT ════════════════════════════════════ */
-const exportExcel=(products,sales,expenses,withdrawals,capital,campaigns)=>{
+const exportExcel=(products,sales,expenses,withdrawals,capital,campaigns,returns=[])=>{
   const wb=XLSX.utils.book_new();
   const add=(n,rows)=>{if(rows.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),n);};
   add('المنتجات',products.map(p=>({'اسم المنتج':p.name,'الفئة':p.cat,'الوحدة':p.unit,'الباركود':p.barcode||'','سعر الشراء':+p.buyP||0,'شحن/وحدة':+p.unitShip||0,'تسويق/وحدة':+p.unitMkt||0,'إجمالي التكلفة':unitCost(p),'سعر البيع':+p.sellP||0,'المخزون':+p.stock||0,'هامش %':unitCost(p)>0?+((p.sellP-unitCost(p))/unitCost(p)*100).toFixed(1):0})));
@@ -170,6 +170,7 @@ const exportExcel=(products,sales,expenses,withdrawals,capital,campaigns)=>{
   const monthly=[];
   allYrs.sort().forEach(yr=>{for(let m=1;m<=12;m++){const mk=`${yr}-${String(m).padStart(2,'0')}`;const mf=calcFin(sales,expenses,withdrawals,mk);if(mf.totalRev>0||mf.totalExp>0)monthly.push({'السنة':yr,'الشهر':MN[m-1],'المبيعات':+mf.totalRev.toFixed(2),'تكلفة البضاعة':+mf.totalCost.toFixed(2),'إجمالي الربح':+mf.gross.toFixed(2),'المصاريف':+mf.totalExp.toFixed(2),'صافي الربح':+mf.net.toFixed(2),'أحمد 92.5%':+(mf.net*.925).toFixed(2),'منصور 5%':+(mf.net*.05).toFixed(2),'عبدالقادر 2.5%':+(mf.net*.025).toFixed(2)});}});
   add('الأرباح الشهرية',monthly);
+  add('المرتجعات',[...returns].sort((a,b)=>a.date.localeCompare(b.date)).map(r=>({'التاريخ':r.date,'ملاحظة':r.note||'','السبب':r.reason||'','الإجمالي':+r.totalCost||0,'المنتجات':(r.items||[]).map(it=>`${it.pname} ×${it.qty}`).join(' · ')})));
   XLSX.writeFile(wb,`IAM_Brand_${today()}.xlsx`);notify('✅ تم تصدير Excel!');
 };
 
@@ -257,6 +258,7 @@ function Dashboard({sales,expenses,withdrawals,capital,accsData,onExcel}){
     const cm2=calcFin(sales,expenses,withdrawals,cm);const pm=calcFin(sales,expenses,withdrawals,prev);
     if(pm.totalRev===0)return null;return((cm2.totalRev-pm.totalRev)/pm.totalRev*100).toFixed(1);
   },[sales,expenses,withdrawals,cm]);
+  const lowStock=useMemo(()=>products.filter(p=>(+p.stock||0)<5).sort((a,b)=>(+a.stock||0)-(+b.stock||0)),[products]);
   const top3=useMemo(()=>{
     const cnt={};sales.forEach(s=>(s.items||[]).forEach(it=>{if(it.pname){cnt[it.pname]=(cnt[it.pname]||0)+(+it.qty||0);}}));
     return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,3);
@@ -286,6 +288,13 @@ function Dashboard({sales,expenses,withdrawals,capital,accsData,onExcel}){
         </div>
       ))}</div>
     </div>
+    {lowStock.length>0&&<div className="card" style={{background:'#FEF2F2',border:'2px solid #FECACA'}}>
+      <div style={{fontWeight:800,fontSize:14,color:'#DC2626',marginBottom:10}}>⚠️ تنبيه مخزون منخفض ({lowStock.length} منتج)</div>
+      {lowStock.map(p=><div key={p.id} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid #FEE2E2'}}>
+        <span style={{fontWeight:600,fontSize:13}}>{p.name}</span>
+        <span className="tag-red">{p.stock===0?'نفد المخزون':`${p.stock} فقط`}</span>
+      </div>)}
+    </div>}
     {top3.length>0&&<div className="card"><div style={{fontWeight:800,fontSize:14,marginBottom:10}}>🏆 الأكثر مبيعاً</div>
       {top3.map(([name,qty],i)=>(<div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid #F1F5F9'}}>
         <span style={{fontWeight:600,fontSize:13}}>{['🥇','🥈','🥉'][i]} {name}</span>
@@ -385,11 +394,23 @@ function Sales({sales,products,onWrite}){
     const revenue=Math.max(0,subTotal-(+discount||0));
     return{subTotal,cost,revenue,profit:revenue-cost};
   },[items,discount,extraShip]);
+  const[giftItems,setGiftItems]=useState([]);
+  const[giftForm,setGiftForm]=useState({pid:'',qty:1});
+  const addGift=()=>{if(!giftForm.pid||!giftForm.qty)return;const pr=products.find(p=>p.id===giftForm.pid);if(!pr)return;setGiftItems(g=>[...g,{pid:pr.id,pname:pr.name,qty:+giftForm.qty,cost:unitCost(pr)}]);setGiftForm({pid:'',qty:1});};
   const doSave=()=>{
     if(!items.some(it=>it.pname||it.sellP>0))return;
     const id=uid();
-    onWrite(d=>d.sales[id]={id,date,note,items,discount:+discount||0,extraShip:+extraShip||0,revenue:totals.revenue,cost:totals.cost,profit:totals.profit});
-    setItems([{...ei}]);setNote('');setDate(today());setDiscount('');setExtraShip('');setOpen(false);notify('✅ تم حفظ الفاتورة');
+    const giftCostTotal=giftItems.reduce((s,g)=>s+(+g.qty*(+g.cost||0)),0);
+    onWrite(d=>{
+      d.sales[id]={id,date,note,items,gifts:giftItems,discount:+discount||0,extraShip:+extraShip||0,revenue:totals.revenue,cost:totals.cost,profit:totals.profit};
+      // ✅ خصم من المخزون عند البيع
+      items.forEach(it=>{if(it.pid&&d.products[it.pid])d.products[it.pid].stock=Math.max(0,(+(d.products[it.pid].stock)||0)-(+it.qty||0));});
+      // ✅ خصم الهدايا من المخزون وإضافة تكلفتها للتسويق
+      giftItems.forEach(g=>{if(g.pid&&d.products[g.pid])d.products[g.pid].stock=Math.max(0,(+(d.products[g.pid].stock)||0)-(+g.qty||0));});
+      if(giftCostTotal>0){const eid=uid();d.expenses[eid]={id:eid,date,type:'تسويق',desc:`هدايا مجانية — ${note||'فاتورة'}`,amount:giftCostTotal};}
+    });
+    setItems([{...ei}]);setGiftItems([]);setNote('');setDate(today());setDiscount('');setExtraShip('');setOpen(false);
+    notify('✅ تم حفظ الفاتورة وخصم المخزون تلقائياً');
   };
   const list=[...sales].filter(s=>!filter||s.date.startsWith(filter)).sort((a,b)=>b.date.localeCompare(a.date));
   return(<div>
@@ -423,7 +444,24 @@ function Sales({sales,products,onWrite}){
         {isAdmin&&<span>تكلفة البضاعة: <strong style={{color:'#DC2626'}}>{fmt(totals.cost)}</strong></span>}
         {isAdmin&&<span>الربح: <strong style={{color:totals.profit>=0?'#047857':'#DC2626'}}>{fmt(totals.profit)}</strong></span>}
       </div>
-      <Btn v="s" onClick={doSave}>✅ حفظ الفاتورة</Btn>
+      <div style={{marginTop:12,paddingTop:12,borderTop:'1px dashed #EDE9FE'}}>
+        <div style={{fontWeight:700,fontSize:13,color:'#047857',marginBottom:8}}>🎁 هدايا مجانية (اختياري)</div>
+        <div style={{display:'grid',gridTemplateColumns:'2fr 80px auto',gap:8,marginBottom:8,alignItems:'end'}}>
+          <Sel value={giftForm.pid} onChange={e=>setGiftForm(p=>({...p,pid:e.target.value}))}>
+            <option value="">-- اختر هدية من المخزون --</option>
+            {products.filter(p=>p.stock>0).map(p=><option key={p.id} value={p.id}>{p.name} (مخزون: {p.stock})</option>)}
+          </Sel>
+          <Inp type="number" value={giftForm.qty} onChange={e=>setGiftForm(p=>({...p,qty:+e.target.value}))} placeholder="كمية"/>
+          <Btn v="s" style={{padding:'9px 12px'}} onClick={addGift}>＋ أضف</Btn>
+        </div>
+        {giftItems.length>0&&<div style={{background:'#ECFDF5',borderRadius:9,padding:'8px 12px',marginBottom:10,fontSize:12}}>
+          {giftItems.map((g,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'4px 0'}}>
+            <span>🎁 {g.pname} ×{g.qty} <span style={{color:'#94A3B8'}}>(تكلفة: {fmt(g.qty*g.cost)} → تسويق)</span></span>
+            <Btn v="d" style={{padding:'2px 8px',fontSize:11}} onClick={()=>setGiftItems(gl=>gl.filter((_,idx)=>idx!==i))}>✕</Btn>
+          </div>)}
+        </div>}
+      </div>
+      <Btn v="s" onClick={doSave}>✅ حفظ الفاتورة وتحديث المخزون</Btn>
     </div>}
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',margin:'14px 0 10px',gap:8,flexWrap:'wrap'}}>
       <span style={{fontWeight:700,fontSize:14}}>السجل ({list.length})</span>
@@ -436,6 +474,7 @@ function Sales({sales,products,onWrite}){
           <div style={{fontWeight:700,fontSize:14}}>🧾 {s.note||'مبيعات'}</div>
           <div style={{fontSize:11,color:'#94A3B8',margin:'2px 0'}}>{s.date}</div>
           {s.items?.length>0&&<div style={{fontSize:12,color:'#64748B'}}>{s.items.map(it=>`${it.pname||'منتج'} ×${it.qty}`).join(' · ')}</div>}
+          {s.gifts?.length>0&&<div style={{fontSize:11,color:'#047857',marginTop:2}}>🎁 هدايا: {s.gifts.map(g=>`${g.pname} ×${g.qty}`).join(' · ')}</div>}
           {(s.discount>0||s.extraShip>0)&&<div style={{fontSize:11,color:'#94A3B8',marginTop:2}}>
             {s.discount>0&&<span>خصم: {fmt(s.discount)} · </span>}{s.extraShip>0&&<span>شحن إضافي: {fmt(s.extraShip)}</span>}
           </div>}
@@ -866,8 +905,11 @@ function PurchaseInvoices({purchases,products,onWrite}){
     const landedItems=calcLanded(form.items,form.shipping,form.otherCosts,form.distMethod);
     const totalGoods=form.items.reduce((s,it)=>s+(+it.qty*(+it.unitPrice)||0),0);
     const totalLanded=landedItems.reduce((s,it)=>s+it.itemLanded,0);
-    onWrite(d=>d.purchases[id]={...form,id,shipping:+form.shipping||0,otherCosts:+form.otherCosts||0,totalGoods,totalLanded,landedItems});
-    setForm(empty);setOpen(false);notify('✅ تم حفظ فاتورة الشراء');
+    onWrite(d=>{
+      d.purchases[id]={...form,id,shipping:+form.shipping||0,otherCosts:+form.otherCosts||0,totalGoods,totalLanded,landedItems};
+      landedItems.forEach(it=>{if(d.products[it.pid]){d.products[it.pid].buyP=+it.unitPrice;d.products[it.pid].unitShip=+it.perUnit.toFixed(2);d.products[it.pid].stock=(+(d.products[it.pid].stock)||0)+(+it.qty||0);}});
+    });
+    setForm(empty);setOpen(false);notify(`✅ تم حفظ الفاتورة وتحديث ${landedItems.length} منتج تلقائياً`);
   };
 
   const list=[...purchases].sort((a,b)=>b.date.localeCompare(a.date));
@@ -1003,6 +1045,100 @@ function PurchaseInvoices({purchases,products,onWrite}){
   </div>);
 }
 
+/* ═══ RETURNS ════════════════════════════════════════ */
+function Returns({returns,products,onWrite}){
+  const empty={date:today(),note:'',reason:'تالف',items:[]};
+  const[form,setForm]=useState(empty);const[open,setOpen]=useState(false);
+  const[rItem,setRItem]=useState({pid:'',qty:1});
+  const REASONS=['تالف','خطأ في الطلب','لم يعجب العميل','مشكلة في الجودة','أخرى'];
+  const addItem=()=>{
+    if(!rItem.pid||!rItem.qty)return;
+    const pr=products.find(p=>p.id===rItem.pid);if(!pr)return;
+    setForm(f=>({...f,items:[...f.items,{pid:pr.id,pname:pr.name,qty:+rItem.qty,unitCost:unitCost(pr)}]}));
+    setRItem({pid:'',qty:1});
+  };
+  const totalCost=form.items.reduce((s,it)=>s+(+it.qty*(+it.unitCost)||0),0);
+  const submit=()=>{
+    if(!form.items.length)return;
+    const id=uid();
+    onWrite(d=>{
+      d.returns[id]={...form,id,totalCost};
+      // ✅ إعادة المخزون
+      form.items.forEach(it=>{
+        if(it.pid&&d.products[it.pid])
+          d.products[it.pid].stock=(+(d.products[it.pid].stock)||0)+(+it.qty||0);
+      });
+    });
+    setForm(empty);setOpen(false);
+    notify(`✅ تم تسجيل المرتجع وإعادة ${form.items.length} منتج للمخزون`);
+  };
+  const list=[...returns].sort((a,b)=>b.date.localeCompare(a.date));
+  return(<div>
+    <h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>↩️ فواتير المرتجعات</h2>
+    <p style={{fontSize:13,color:'#94A3B8',marginBottom:14}}>تسجيل المرتجعات يُعيد المخزون تلقائياً</p>
+    <div className="card" style={{background:'#FEF2F2',border:'1px solid #FECACA',marginBottom:14}}>
+      <div style={{fontWeight:700,fontSize:13,color:'#DC2626',marginBottom:6}}>📌 كيف يعمل؟</div>
+      <div style={{fontSize:12,color:'#7F1D1D',lineHeight:1.9}}>
+        ① سجّل المنتجات المرتجعة والكميات<br/>
+        ② اختر سبب الإرجاع<br/>
+        ③ المخزون يرجع تلقائياً عند الحفظ
+      </div>
+    </div>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+      <span style={{fontWeight:700,fontSize:14}}>المرتجعات ({list.length})</span>
+      <Btn v="d" onClick={()=>setOpen(!open)}>{open?'✕ إغلاق':'↩️ مرتجع جديد'}</Btn>
+    </div>
+    {open&&<div className="card" style={{border:'2px solid #FECACA',marginBottom:14}}>
+      <div style={{fontWeight:800,fontSize:14,color:'#DC2626',marginBottom:12}}>↩️ تسجيل مرتجع جديد</div>
+      <div className="fgrid" style={{marginBottom:12}}>
+        <Inp label="التاريخ" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/>
+        <div className="fg"><label>سبب الإرجاع</label>
+          <select className="fc" value={form.reason} onChange={e=>setForm(f=>({...f,reason:e.target.value}))}>
+            {REASONS.map(r=><option key={r}>{r}</option>)}
+          </select>
+        </div>
+        <Inp label="ملاحظة" value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} placeholder="اسم العميل أو رقم الطلب"/>
+      </div>
+      <div style={{fontWeight:700,fontSize:13,color:'#475569',marginBottom:8}}>📦 المنتجات المرتجعة:</div>
+      <div style={{display:'grid',gridTemplateColumns:'2fr 80px auto',gap:8,marginBottom:10,alignItems:'end'}}>
+        <Sel value={rItem.pid} onChange={e=>setRItem(p=>({...p,pid:e.target.value}))}>
+          <option value="">-- اختر منتج --</option>
+          {products.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+        </Sel>
+        <Inp type="number" value={rItem.qty} onChange={e=>setRItem(p=>({...p,qty:+e.target.value}))} placeholder="كمية"/>
+        <Btn v="d" style={{padding:'9px 12px'}} onClick={addItem}>＋ أضف</Btn>
+      </div>
+      {form.items.length>0&&<>
+        <div style={{background:'#FEF2F2',borderRadius:9,padding:'8px 12px',marginBottom:10}}>
+          {form.items.map((it,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'5px 0',borderBottom:'1px solid #FEE2E2',fontSize:13}}>
+            <span style={{fontWeight:600}}>↩️ {it.pname} ×{it.qty}</span>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <span style={{color:'#6D28D9',fontWeight:700}}>تكلفة: {fmt(it.qty*it.unitCost)}</span>
+              <Btn v="d" style={{padding:'2px 8px',fontSize:11}} onClick={()=>setForm(f=>({...f,items:f.items.filter((_,idx)=>idx!==i)}))}>✕</Btn>
+            </div>
+          </div>)}
+          <div style={{marginTop:8,fontWeight:800,color:'#6D28D9',fontSize:14}}>إجمالي تكلفة المرتجع: {fmt(totalCost)} ر.ي</div>
+        </div>
+        <Btn v="d" onClick={submit}>💾 حفظ المرتجع وإعادة المخزون</Btn>
+      </>}
+    </div>}
+    {list.length===0?<div className="card" style={{textAlign:'center',padding:36,color:'#94A3B8'}}>لا توجد مرتجعات مسجّلة</div>
+    :list.map(r=><div key={r.id} className="card" style={{border:'1px solid #FECACA'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8,flexWrap:'wrap'}}>
+        <div>
+          <div style={{fontWeight:800,fontSize:14,color:'#DC2626'}}>↩️ {r.reason||'مرتجع'} {r.note&&<span style={{color:'#94A3B8',fontSize:12}}>— {r.note}</span>}</div>
+          <div style={{fontSize:12,color:'#94A3B8',margin:'3px 0'}}>{r.date}</div>
+          <div style={{fontSize:12,color:'#64748B'}}>{(r.items||[]).map(it=>`${it.pname} ×${it.qty}`).join(' · ')}</div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <span className="tag-red">تكلفة: {fmt(r.totalCost)}</span>
+          <Btn v="d" style={{padding:'4px 9px',fontSize:12}} onClick={()=>{if(window.confirm('حذف المرتجع؟ (لن يُعاد المخزون)')){onWrite(d=>delete d.returns[r.id]);notify('🗑️ تم الحذف');}}}>🗑️</Btn>
+        </div>
+      </div>
+    </div>)}
+  </div>);
+}
+
 /* ═══ SETTINGS ════════════════════════════════════════ */
 function Settings({onLogout,onWrite,products,sales,expenses,withdrawals,capital,campaigns,cfg,onExcel}){
   const[p,setP]=useState({ahmed:'',mansour:'',aq:''});const[ok,setOk]=useState(false);
@@ -1045,7 +1181,7 @@ function App(){
   const[tab,setTab]=useState(0);
   const[products,setProducts]=useState([]);const[sales,setSales]=useState([]);
   const[expenses,setExpenses]=useState([]);const[withdrawals,setWithdrawals]=useState([]);
-  const[capital,setCapital]=useState([]);const[campaigns,setCampaigns]=useState([]);const[purchases,setPurchases]=useState([]);
+  const[capital,setCapital]=useState([]);const[campaigns,setCampaigns]=useState([]);const[purchases,setPurchases]=useState([]);const[returns,setReturns]=useState([]);
   const[cfg,setCfg]=useState({pwd_ahmed:'1234',pwd_mansour:'5678',pwd_aq:'9012'});
   const[syncState,setSyncState]=useState('loading');const[lastTs,setLastTs]=useState(0);
   const[moreOpen,setMoreOpen]=useState(false);const[hasToken,setHasToken]=useState(!!getToken());
@@ -1053,7 +1189,7 @@ function App(){
   const applyData=d=>{
     setProducts(Object.values(d.products||{}));setSales(Object.values(d.sales||{}));
     setExpenses(Object.values(d.expenses||{}));setWithdrawals(Object.values(d.withdrawals||{}));
-    setCapital(Object.values(d.capital||{}));setCampaigns(Object.values(d.campaigns||{}));setPurchases(Object.values(d.purchases||{}));
+    setCapital(Object.values(d.capital||{}));setCampaigns(Object.values(d.campaigns||{}));setPurchases(Object.values(d.purchases||{}));setReturns(Object.values(d.returns||{}));
     setCfg(d.config||{pwd_ahmed:'1234',pwd_mansour:'5678',pwd_aq:'9012'});
     setLastTs(d.ts||0);
   };
@@ -1072,7 +1208,7 @@ function App(){
 
   const handleLogin=u=>{setUser(u);sessionStorage.setItem('iam_u',JSON.stringify(u));setTab(u.role==='admin'?0:u.role==='mansour'?1:3);};
   const handleLogout=()=>{sessionStorage.removeItem('iam_u');setUser(null);};
-  const onExcel=()=>exportExcel(products,sales,expenses,withdrawals,capital,campaigns);
+  const onExcel=()=>exportExcel(products,sales,expenses,withdrawals,capital,campaigns,returns);
 
   const accsData=useMemo(()=>{
     const fin=calcFin(sales,expenses,withdrawals);
@@ -1107,6 +1243,7 @@ function App(){
       case 8:return isAdmin?<PL sales={sales} expenses={expenses} withdrawals={withdrawals} capital={capital}/>:null;
       case 9:return isAdmin?<Campaigns campaigns={campaigns} onWrite={onWrite}/>:null;
       case 11:return isAdmin?<PurchaseInvoices purchases={purchases} products={products} onWrite={onWrite}/>:null;
+      case 12:return isAdmin?<Returns returns={returns} products={products} onWrite={onWrite}/>:null;
       case 10:return isAdmin?<Settings onLogout={handleLogout} onWrite={onWrite} products={products} sales={sales} expenses={expenses} withdrawals={withdrawals} capital={capital} campaigns={campaigns} cfg={cfg} onExcel={onExcel}/>:null;
       default:return null;
     }

@@ -303,7 +303,7 @@ function Products({products,onWrite}){
   const empty={name:'',cat:CATS[0],unit:'قطعة',buyP:'',unitShip:'',unitMkt:'',sellP:'',stock:'',barcode:'',image:''};
   const[form,setForm]=useState(empty);const[editId,setEditId]=useState(null);const[q,setQ]=useState('');
   const s=k=>e=>setForm(p=>({...p,[k]:e.target.value}));
-  const submit=()=>{if(!form.name||!form.sellP)return;const id=editId||uid();onWrite(d=>d.products[id]={...form,buyP:+form.buyP||0,unitShip:+form.unitShip||0,unitMkt:+form.unitMkt||0,sellP:+form.sellP||0,stock:+form.stock||0,id});setForm(empty);setEditId(null);notify('✅ تم الحفظ');};
+  const submit=()=>{if(!form.name||!form.sellP)return;const id=editId||uid();onWrite(d=>d.products[id]={...form,buyP:+form.buyP||0,unitShip:+form.unitShip||0,unitMkt:+form.unitMkt||0,sellP:+form.sellP||0,stock:+form.stock||0,id});setForm(empty);setEditId(null);notify('✅ تمت الإضافة — يظهر في القائمة خلال ثوانٍ');};
   const totalCostPreview=+form.buyP+(+form.unitShip||0)+(+form.unitMkt||0);
   const marginPreview=totalCostPreview>0?((+form.sellP-totalCostPreview)/totalCostPreview*100).toFixed(1):null;
   const filtered=products.filter(p=>!q||p.name.includes(q)||(p.barcode||'').includes(q));
@@ -387,14 +387,27 @@ function Sales({sales,products,onWrite}){
     const revenue=Math.max(0,subTotal-(+discount||0));
     return{subTotal,cost,revenue,profit:revenue-cost};
   },[items,discount,extraShip]);
+  const[giftItems,setGiftItems]=useState([]);
+  const[giftPid,setGiftPid]=useState('');
+  const[giftQty,setGiftQty]=useState(1);
+  const addGift=()=>{
+    if(!giftPid)return;
+    const pr=products.find(p=>p.id===giftPid);if(!pr)return;
+    const uc=unitCost(pr);
+    setGiftItems(g=>[...g,{pid:pr.id,pname:pr.name,qty:+giftQty||1,cost:uc}]);
+    setGiftPid('');setGiftQty(1);
+  };
   const doSave=()=>{
     if(!items.some(it=>it.pname||it.sellP>0))return;
     const id=uid();
+    const giftCostTotal=giftItems.reduce((s,g)=>s+(g.qty*(g.cost||0)),0);
     onWrite(d=>{
-      d.sales[id]={id,date,note,items,discount:+discount||0,extraShip:+extraShip||0,revenue:totals.revenue,cost:totals.cost,profit:totals.profit};
+      d.sales[id]={id,date,note,items,gifts:giftItems,discount:+discount||0,extraShip:+extraShip||0,revenue:totals.revenue,cost:totals.cost,profit:totals.profit};
       items.forEach(function(it){if(it.pid&&d.products[it.pid])d.products[it.pid].stock=Math.max(0,(Number(d.products[it.pid].stock)||0)-Number(it.qty||0));});
+      giftItems.forEach(g=>{if(g.pid&&d.products[g.pid])d.products[g.pid].stock=Math.max(0,(Number(d.products[g.pid].stock)||0)-Number(g.qty||0));});
+      if(giftCostTotal>0){const eid=uid();d.expenses[eid]={id:eid,date,type:'تسويق',desc:'هدايا مجانية — '+(note||'فاتورة'),amount:giftCostTotal};}
     });
-    setItems([{...ei}]);setNote('');setDate(today());setDiscount('');setExtraShip('');setOpen(false);notify('✅ تم حفظ الفاتورة وخصم المخزون');
+    setItems([{...ei}]);setGiftItems([]);setGiftPid('');setGiftQty(1);setNote('');setDate(today());setDiscount('');setExtraShip('');setOpen(false);notify('✅ تم حفظ الفاتورة وخصم المخزون');
   };
   const list=[...sales].filter(s=>!filter||s.date.startsWith(filter)).sort((a,b)=>b.date.localeCompare(a.date));
   return(<div>
@@ -428,7 +441,26 @@ function Sales({sales,products,onWrite}){
         {isAdmin&&<span>تكلفة البضاعة: <strong style={{color:'#DC2626'}}>{fmt(totals.cost)}</strong></span>}
         {isAdmin&&<span>الربح: <strong style={{color:totals.profit>=0?'#047857':'#DC2626'}}>{fmt(totals.profit)}</strong></span>}
       </div>
-      <Btn v="s" onClick={doSave}>✅ حفظ الفاتورة</Btn>
+      <div style={{borderTop:'1px dashed #DDD6FE',paddingTop:12,marginTop:10}}>
+        <div style={{fontWeight:700,fontSize:13,color:'#047857',marginBottom:8}}>🎁 هدايا مجانية (تُخصم من المخزون وتضاف للتسويق)</div>
+        <div style={{display:'grid',gridTemplateColumns:'2fr 70px auto',gap:8,marginBottom:8,alignItems:'end'}}>
+          <select className="fc" value={giftPid} onChange={e=>setGiftPid(e.target.value)}>
+            <option value="">-- اختر منتج هدية --</option>
+            {products.filter(p=>(+p.stock||0)>0).map(p=><option key={p.id} value={p.id}>{p.name} (مخزون: {p.stock})</option>)}
+          </select>
+          <input className="fc" type="number" value={giftQty} min={1} onChange={e=>setGiftQty(+e.target.value)} placeholder="كمية"/>
+          <Btn v="s" style={{padding:'9px 10px'}} onClick={addGift}>＋</Btn>
+        </div>
+        {giftItems.length>0&&<div style={{background:'#ECFDF5',borderRadius:9,padding:'8px 12px',marginBottom:10}}>
+          {giftItems.map((g,i)=>(
+            <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'4px 0',fontSize:13}}>
+              <span>🎁 <strong>{g.pname}</strong> ×{g.qty} <span style={{color:'#94A3B8'}}>(تكلفة {fmt(g.qty*g.cost)} ← تسويق)</span></span>
+              <Btn v="d" style={{padding:'2px 8px',fontSize:11}} onClick={()=>setGiftItems(gl=>gl.filter((_,j)=>j!==i))}>✕</Btn>
+            </div>
+          ))}
+        </div>}
+      </div>
+      <Btn v="s" onClick={doSave}>✅ حفظ الفاتورة وتحديث المخزون</Btn>
     </div>}
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',margin:'14px 0 10px',gap:8,flexWrap:'wrap'}}>
       <span style={{fontWeight:700,fontSize:14}}>السجل ({list.length})</span>

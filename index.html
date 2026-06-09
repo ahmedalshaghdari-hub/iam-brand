@@ -408,24 +408,42 @@ function Sales({sales,products,onWrite}){
   };
   const doSave=()=>{
     if(!items.some(it=>it.pname||it.sellP>0))return;
-    const id=editId||uid();
-    const giftCostTotal=giftItems.reduce((s,g)=>s+(g.qty*(g.cost||0)),0);
+    // ✅ snapshot كامل قبل أي reset — الحل لمشكلة stale closure
+    const _id=editId||uid();
+    const _eid=editId;
+    const _date=date, _note=note;
+    const _items=[...items];
+    const _gifts=[...giftItems];  // snapshot الهدايا الحالية
+    const _disc=+discount||0, _ship=+extraShip||0;
+    const _rev=totals.revenue, _cost=totals.cost, _pft=totals.profit;
+    const _giftCost=_gifts.reduce((s,g)=>s+(g.qty*(g.cost||0)),0);
+
     onWrite(d=>{
-      // ↩️ إذا تعديل: أعد المخزون القديم أولاً
-      if(editId&&d.sales[editId]){
-        const old=d.sales[editId];
+      // ↩️ عكس المخزون القديم عند التعديل
+      if(_eid&&d.sales[_eid]){
+        const old=d.sales[_eid];
         (old.items||[]).forEach(it=>{if(it.pid&&d.products[it.pid])d.products[it.pid].stock=(Number(d.products[it.pid].stock)||0)+Number(it.qty||0);});
         (old.gifts||[]).forEach(g=>{if(g.pid&&d.products[g.pid])d.products[g.pid].stock=(Number(d.products[g.pid].stock)||0)+Number(g.qty||0);});
       }
-      // ✅ احفظ الفاتورة الجديدة/المعدّلة
-      d.sales[id]={id,date,note,items,gifts:giftItems,discount:+discount||0,extraShip:+extraShip||0,revenue:totals.revenue,cost:totals.cost,profit:totals.profit};
-      // 📦 خصم من المخزون
-      items.forEach(function(it){if(it.pid&&d.products[it.pid])d.products[it.pid].stock=Math.max(0,(Number(d.products[it.pid].stock)||0)-Number(it.qty||0));});
-      giftItems.forEach(g=>{if(g.pid&&d.products[g.pid])d.products[g.pid].stock=Math.max(0,(Number(d.products[g.pid].stock)||0)-Number(g.qty||0));});
-      if(giftCostTotal>0){const eid=uid();d.expenses[eid]={id:eid,date,type:'تسويق',desc:'هدايا مجانية — '+(note||'فاتورة'),amount:giftCostTotal};}
+      // 💾 حفظ الفاتورة
+      d.sales[_id]={id:_id,date:_date,note:_note,items:_items,gifts:_gifts,discount:_disc,extraShip:_ship,revenue:_rev,cost:_cost,profit:_pft};
+      // 📦 خصم مخزون الأصناف المباعة
+      _items.forEach(it=>{if(it.pid&&d.products[it.pid]){d.products[it.pid].stock=Math.max(0,(Number(d.products[it.pid].stock)||0)-Number(it.qty||0));}});
+      // 🎁 خصم مخزون الهدايا
+      _gifts.forEach(g=>{
+        if(g.pid&&d.products[g.pid]){
+          d.products[g.pid].stock=Math.max(0,(Number(d.products[g.pid].stock)||0)-Number(g.qty||0));
+        }
+      });
+      // 📊 تكلفة الهدايا → مصاريف تسويق
+      if(_giftCost>0){const eid=uid();d.expenses[eid]={id:eid,date:_date,type:'تسويق',desc:'هدايا مجانية — '+(_note||'فاتورة'),amount:_giftCost};}
     });
-    setItems([{...ei}]);setGiftItems([]);setGiftPid('');setGiftQty(1);setNote('');setDate(today());setDiscount('');setExtraShip('');setOpen(false);setEditId(null);
-    notify(editId?'✅ تم تعديل الفاتورة وتحديث المخزون':'✅ تم حفظ الفاتورة وتحديث المخزون');
+
+    // reset بعد onWrite (لا يؤثر على الـ snapshot)
+    setItems([{...ei}]);setGiftItems([]);setGiftPid('');setGiftQty(1);
+    setNote('');setDate(today());setDiscount('');setExtraShip('');
+    setOpen(false);setEditId(null);
+    notify(_eid?'✅ تم تعديل الفاتورة وتحديث المخزون':'✅ تم حفظ الفاتورة وتحديث المخزون');
   };
   const list=[...sales].filter(s=>!filter||s.date.startsWith(filter)).sort((a,b)=>b.date.localeCompare(a.date));
   return(<div>

@@ -383,7 +383,7 @@ function Sales({sales,products,onWrite}){
   const startEdit=s=>{
     setDate(s.date||today());setNote(s.note||'');
     setItems(s.items&&s.items.length>0?s.items:[{...ei}]);
-    setGiftItems(s.gifts||[]);
+    syncGifts(s.gifts||[]);  // sync ref + state
     setDiscount(s.discount?String(s.discount):'');
     setExtraShip(s.extraShip?String(s.extraShip):'');
     setEditId(s.id);setOpen(true);
@@ -397,15 +397,19 @@ function Sales({sales,products,onWrite}){
     return{subTotal,cost,revenue,profit:revenue-cost};
   },[items,discount,extraShip]);
   const[giftItems,setGiftItems]=useState([]);
+  const giftRef=useRef([]);  // ref للقراءة المضمونة في doSave
   const[giftPid,setGiftPid]=useState('');
   const[giftQty,setGiftQty]=useState(1);
+  const syncGifts=newArr=>{giftRef.current=newArr;setGiftItems(newArr);};
   const addGift=()=>{
     if(!giftPid)return;
     const pr=products.find(p=>p.id===giftPid);if(!pr)return;
     const uc=unitCost(pr);
-    setGiftItems(g=>[...g,{pid:pr.id,pname:pr.name,qty:+giftQty||1,cost:uc}]);
+    const newArr=[...giftRef.current,{pid:pr.id,pname:pr.name,qty:+giftQty||1,cost:uc}];
+    syncGifts(newArr);
     setGiftPid('');setGiftQty(1);
   };
+  const removeGift=i=>{const newArr=giftRef.current.filter((_,j)=>j!==i);syncGifts(newArr);};
   const doSave=()=>{
     if(!items.some(it=>it.pname||it.sellP>0))return;
     // ✅ snapshot كامل قبل أي reset — الحل لمشكلة stale closure
@@ -413,7 +417,7 @@ function Sales({sales,products,onWrite}){
     const _eid=editId;
     const _date=date, _note=note;
     const _items=[...items];
-    const _gifts=[...giftItems];  // snapshot الهدايا الحالية
+    const _gifts=[...giftRef.current];  // من useRef مضمون 100%
     const _disc=+discount||0, _ship=+extraShip||0;
     const _rev=totals.revenue, _cost=totals.cost, _pft=totals.profit;
     const _giftCost=_gifts.reduce((s,g)=>s+(g.qty*(g.cost||0)),0);
@@ -440,7 +444,7 @@ function Sales({sales,products,onWrite}){
     });
 
     // reset بعد onWrite (لا يؤثر على الـ snapshot)
-    setItems([{...ei}]);setGiftItems([]);setGiftPid('');setGiftQty(1);
+    setItems([{...ei}]);syncGifts([]);setGiftPid('');setGiftQty(1);
     setNote('');setDate(today());setDiscount('');setExtraShip('');
     setOpen(false);setEditId(null);
     notify(_eid?'✅ تم تعديل الفاتورة وتحديث المخزون':'✅ تم حفظ الفاتورة وتحديث المخزون');
@@ -449,7 +453,7 @@ function Sales({sales,products,onWrite}){
   return(<div>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4,gap:8,flexWrap:'wrap'}}>
       <div><h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>💰 المبيعات</h2><p style={{fontSize:13,color:'#94A3B8',margin:0}}>{sales.length} فاتورة</p></div>
-      <Btn onClick={()=>{if(open){setEditId(null);setItems([{...ei}]);setGiftItems([]);setNote('');setDate(today());setDiscount('');setExtraShip('');}setOpen(v=>!v);}}>{open?(editId?'✕ إلغاء التعديل':'✕ إغلاق'):'➕ فاتورة جديدة'}</Btn>
+      <Btn onClick={()=>{if(open){setEditId(null);setItems([{...ei}]);syncGifts([]);setNote('');setDate(today());setDiscount('');setExtraShip('');}setOpen(v=>!v);}}>{open?(editId?'✕ إلغاء التعديل':'✕ إغلاق'):'➕ فاتورة جديدة'}</Btn>
     </div>
     {open&&<div className="card" style={{marginTop:12,border:'2px solid #A78BFA'}}>
       <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>{editId?'✏️ تعديل الفاتورة':'🧾 فاتورة جديدة'}</div>
@@ -491,7 +495,7 @@ function Sales({sales,products,onWrite}){
           {giftItems.map((g,i)=>(
             <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'4px 0',fontSize:13}}>
               <span>🎁 <strong>{g.pname}</strong> ×{g.qty} <span style={{color:'#94A3B8'}}>(تكلفة {fmt(g.qty*g.cost)} ← تسويق)</span></span>
-              <Btn v="d" style={{padding:'2px 8px',fontSize:11}} onClick={()=>setGiftItems(gl=>gl.filter((_,j)=>j!==i))}>✕</Btn>
+              <Btn v="d" style={{padding:'2px 8px',fontSize:11}} onClick={()=>removeGift(i)}>✕</Btn>
             </div>
           ))}
         </div>}
@@ -518,7 +522,14 @@ function Sales({sales,products,onWrite}){
           {isAdmin&&<div style={{fontSize:11,color:'#64748B'}}>ربح: {fmt(s.profit)}</div>}
           <div style={{display:'flex',gap:5,marginTop:5,flexWrap:'wrap'}}>
               <Btn v="g" style={{padding:'3px 10px',fontSize:12}} onClick={()=>startEdit(s)}>✏️ تعديل</Btn>
-              {isAdmin&&<Btn v="d" style={{padding:'3px 10px',fontSize:12}} onClick={()=>{if(window.confirm('حذف؟')){onWrite(d=>delete d.sales[s.id]);notify('🗑️ تم الحذف');}}}>🗑️</Btn>}
+              {isAdmin&&<Btn v="d" style={{padding:'3px 10px',fontSize:12}} onClick={()=>{if(window.confirm('حذف الفاتورة وإعادة المخزون؟')){onWrite(d=>{
+                  const sal=d.sales[s.id];
+                  if(sal){
+                    (sal.items||[]).forEach(it=>{if(it.pid&&d.products[it.pid])d.products[it.pid].stock=(Number(d.products[it.pid].stock)||0)+Number(it.qty||0);});
+                    (sal.gifts||[]).forEach(g=>{if(g.pid&&d.products[g.pid])d.products[g.pid].stock=(Number(d.products[g.pid].stock)||0)+Number(g.qty||0);});
+                  }
+                  delete d.sales[s.id];
+                });notify('🗑️ تم الحذف وإعادة المخزون');}}}}>🗑️</Btn>}
           </div>
         </div>
       </div>

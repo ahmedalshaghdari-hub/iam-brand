@@ -379,7 +379,16 @@ function Sales({sales,products,onWrite}){
   const ei={pid:'',pname:'',qty:1,sellP:0,buyP:0,unitShip:0,unitMkt:0};
   const[date,setDate]=useState(today());const[note,setNote]=useState('');
   const[items,setItems]=useState([{...ei}]);const[discount,setDiscount]=useState('');const[extraShip,setExtraShip]=useState('');
-  const[filter,setFilter]=useState('');const[open,setOpen]=useState(false);
+  const[filter,setFilter]=useState('');const[open,setOpen]=useState(false);const[editId,setEditId]=useState(null);
+  const startEdit=s=>{
+    setDate(s.date||today());setNote(s.note||'');
+    setItems(s.items&&s.items.length>0?s.items:[{...ei}]);
+    setGiftItems(s.gifts||[]);
+    setDiscount(s.discount?String(s.discount):'');
+    setExtraShip(s.extraShip?String(s.extraShip):'');
+    setEditId(s.id);setOpen(true);
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
   const upd=(i,k,v)=>{const n=[...items];n[i]={...n[i],[k]:v};if(k==='pid'){const pr=products.find(p=>p.id===v);if(pr)n[i]={...n[i],pname:pr.name,sellP:pr.sellP,buyP:+pr.buyP||0,unitShip:+pr.unitShip||0,unitMkt:+pr.unitMkt||0};}setItems(n);};
   const totals=useMemo(()=>{
     const subTotal=items.reduce((s,it)=>s+(+it.qty*(+it.sellP)||0),0);
@@ -399,24 +408,33 @@ function Sales({sales,products,onWrite}){
   };
   const doSave=()=>{
     if(!items.some(it=>it.pname||it.sellP>0))return;
-    const id=uid();
+    const id=editId||uid();
     const giftCostTotal=giftItems.reduce((s,g)=>s+(g.qty*(g.cost||0)),0);
     onWrite(d=>{
+      // ↩️ إذا تعديل: أعد المخزون القديم أولاً
+      if(editId&&d.sales[editId]){
+        const old=d.sales[editId];
+        (old.items||[]).forEach(it=>{if(it.pid&&d.products[it.pid])d.products[it.pid].stock=(Number(d.products[it.pid].stock)||0)+Number(it.qty||0);});
+        (old.gifts||[]).forEach(g=>{if(g.pid&&d.products[g.pid])d.products[g.pid].stock=(Number(d.products[g.pid].stock)||0)+Number(g.qty||0);});
+      }
+      // ✅ احفظ الفاتورة الجديدة/المعدّلة
       d.sales[id]={id,date,note,items,gifts:giftItems,discount:+discount||0,extraShip:+extraShip||0,revenue:totals.revenue,cost:totals.cost,profit:totals.profit};
+      // 📦 خصم من المخزون
       items.forEach(function(it){if(it.pid&&d.products[it.pid])d.products[it.pid].stock=Math.max(0,(Number(d.products[it.pid].stock)||0)-Number(it.qty||0));});
       giftItems.forEach(g=>{if(g.pid&&d.products[g.pid])d.products[g.pid].stock=Math.max(0,(Number(d.products[g.pid].stock)||0)-Number(g.qty||0));});
       if(giftCostTotal>0){const eid=uid();d.expenses[eid]={id:eid,date,type:'تسويق',desc:'هدايا مجانية — '+(note||'فاتورة'),amount:giftCostTotal};}
     });
-    setItems([{...ei}]);setGiftItems([]);setGiftPid('');setGiftQty(1);setNote('');setDate(today());setDiscount('');setExtraShip('');setOpen(false);notify('✅ تم حفظ الفاتورة وخصم المخزون');
+    setItems([{...ei}]);setGiftItems([]);setGiftPid('');setGiftQty(1);setNote('');setDate(today());setDiscount('');setExtraShip('');setOpen(false);setEditId(null);
+    notify(editId?'✅ تم تعديل الفاتورة وتحديث المخزون':'✅ تم حفظ الفاتورة وتحديث المخزون');
   };
   const list=[...sales].filter(s=>!filter||s.date.startsWith(filter)).sort((a,b)=>b.date.localeCompare(a.date));
   return(<div>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4,gap:8,flexWrap:'wrap'}}>
       <div><h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>💰 المبيعات</h2><p style={{fontSize:13,color:'#94A3B8',margin:0}}>{sales.length} فاتورة</p></div>
-      <Btn onClick={()=>setOpen(!open)}>{open?'✕ إغلاق':'➕ فاتورة جديدة'}</Btn>
+      <Btn onClick={()=>{if(open){setEditId(null);setItems([{...ei}]);setGiftItems([]);setNote('');setDate(today());setDiscount('');setExtraShip('');}setOpen(v=>!v);}}>{open?(editId?'✕ إلغاء التعديل':'✕ إغلاق'):'➕ فاتورة جديدة'}</Btn>
     </div>
     {open&&<div className="card" style={{marginTop:12,border:'2px solid #A78BFA'}}>
-      <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>🧾 فاتورة جديدة</div>
+      <div style={{fontWeight:800,fontSize:14,marginBottom:12}}>{editId?'✏️ تعديل الفاتورة':'🧾 فاتورة جديدة'}</div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 2fr',gap:10,marginBottom:12}}>
         <Inp label="التاريخ" type="date" value={date} onChange={e=>setDate(e.target.value)}/>
         <Inp label="العميل/ملاحظة" value={note} onChange={e=>setNote(e.target.value)} placeholder="اسم العميل"/>
@@ -460,7 +478,7 @@ function Sales({sales,products,onWrite}){
           ))}
         </div>}
       </div>
-      <Btn v="s" onClick={doSave}>✅ حفظ الفاتورة وتحديث المخزون</Btn>
+      <Btn v="s" onClick={doSave}>{editId?'💾 حفظ التعديل':'✅ حفظ الفاتورة'}</Btn>
     </div>}
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',margin:'14px 0 10px',gap:8,flexWrap:'wrap'}}>
       <span style={{fontWeight:700,fontSize:14}}>السجل ({list.length})</span>
@@ -480,7 +498,10 @@ function Sales({sales,products,onWrite}){
         <div style={{textAlign:'left'}}>
           <div style={{fontWeight:900,fontSize:17,color:'#047857'}}>{fmt(s.revenue)} ر.ي</div>
           {isAdmin&&<div style={{fontSize:11,color:'#64748B'}}>ربح: {fmt(s.profit)}</div>}
-          {isAdmin&&<Btn v="d" style={{padding:'3px 10px',fontSize:12,marginTop:5}} onClick={()=>{if(window.confirm('حذف؟')){onWrite(d=>delete d.sales[s.id]);notify('🗑️ تم الحذف');}}}>🗑️</Btn>}
+          <div style={{display:'flex',gap:5,marginTop:5,flexWrap:'wrap'}}>
+              <Btn v="g" style={{padding:'3px 10px',fontSize:12}} onClick={()=>startEdit(s)}>✏️ تعديل</Btn>
+              {isAdmin&&<Btn v="d" style={{padding:'3px 10px',fontSize:12}} onClick={()=>{if(window.confirm('حذف؟')){onWrite(d=>delete d.sales[s.id]);notify('🗑️ تم الحذف');}}}>🗑️</Btn>}
+          </div>
         </div>
       </div>
     </div>))}</div>
